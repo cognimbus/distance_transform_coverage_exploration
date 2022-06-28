@@ -30,7 +30,7 @@ the min score threshold of the map that represnt how closed the map is (contour)
 
 /tf
 
-/static
+/tf_static
 
 /move_base_api
 
