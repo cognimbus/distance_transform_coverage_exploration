@@ -1,4 +1,4 @@
-# disntance_transform_coverage_exploration
+# distance_transform_coverage_exploration
 ## Introduction
 This package implement the algoritm by Yakir Huri.
 The algorithm consists of three steps:
@@ -21,12 +21,21 @@ the min distance bewteen goals inisde of the coverage path in meters.
 #### robot_raduis
 robot radius in meters
 #### exploration_score
-the min score of the map that represnt how closed the map is (contour). if the score reached, the exploration will end.
+the min score threshold of the map that represnt how closed the map is (contour). 
+
 ### topics
 #### Subscribed Topics
+
 /map
+
 /tf
+
 /static
+
 /move_base_api
+
 #### Published Topics
+
 /move_base_api
+
+![Alt text](distance_transform_coverage_exploration.png?raw=true "Title")
