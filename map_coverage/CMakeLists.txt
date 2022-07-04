@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(map_coverage)
 
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 
 find_package(OpenCV REQUIRED )
 
@@ -13,10 +13,15 @@ find_package(catkin REQUIRED COMPONENTS
   move_base_msgs
   actionlib
   tf
+  std_msgs
+  roslib
 )
 
 
-catkin_package()
+catkin_package(
+   INCLUDE_DIRS include
+   CATKIN_DEPENDS roscpp std_msgs  roslib
+)
 
 ###########
 ## Build ##

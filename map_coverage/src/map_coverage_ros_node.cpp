@@ -65,6 +65,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <ros/ros.h>
+#include <ros/package.h>
 #include <iostream>
 
 using namespace cv;
@@ -73,7 +74,6 @@ using namespace std;
 
 #include "../include/DisantanceMapCoverage.h"
 #include "../include/GoalCalculator.h"
-#include "../include/AstarPathManager.h"
 #include "../include/MoveBaseController.h"
 
 class MapCoverageManager
@@ -1080,7 +1080,7 @@ public:
 
                     for( int i = 0; i < path.size(); i++){
 
-                        circle(dbg, path[i], 2, Scalar(0,255,255), -1, 8, 0);  
+                        circle(dbg, path[i], 2, Scalar(34, 139, 139), -1, 8, 0);  
 
                         if( i > 0 ){
                             cv::line(dbg, path[i], path[i - 1], Scalar(34, 139, 139), 2);
@@ -1092,8 +1092,8 @@ public:
                     circle(dbg, currentPosition, 2, Scalar(0,0,255), -1, 8, 0);   
                                     
 
-                    imwrite("dbg.png",dbg);
-                    imwrite("distanceTransformImg.pgm",distanceTransformImg);
+                    imwrite(ros::package::getPath("map_coverage") + "/dbg.png",dbg);
+                    imwrite(ros::package::getPath("map_coverage") + "/distanceTransformImg.pgm",distanceTransformImg);
 
 
 
@@ -1182,7 +1182,6 @@ private:
     DistanceTransformGoalCalculator distanceTransformGoalCalculator;
     DisantanceMapCoverage disantanceMapCoverage;
     GoalCalculator goalCalculator;
-    AstarPathManager astarPathManager;
 
     // ALGO-PARAMS
 
