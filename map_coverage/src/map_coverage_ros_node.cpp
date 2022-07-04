@@ -359,7 +359,11 @@ public:
 
         init_ = true;
 
+
         currentGlobalMap_ = occupancyGridMatToGrayScale(tmp.clone());
+
+        mapping_map_ = currentGlobalMap_.clone();
+
 
         addDilationForGlobalMap(currentGlobalMap_, robot_radius_meters_);
 
@@ -1066,8 +1070,7 @@ public:
                     distanceTransformGoalCalculator.normalizeDistanceTransform(distanceTransformImg, grayDistImg);
 
 
-                    Mat dbg = currentAlgoMap_.clone();
-
+                    Mat dbg = mapping_map_.clone();
                     cvtColor(dbg, dbg, COLOR_GRAY2BGR);
 
                     // calc the path-coverage of the current blob
@@ -1214,6 +1217,8 @@ private:
     geometry_msgs::PoseStamped robotStartLocation_;
 
     cv::Mat currentGlobalMap_;
+
+    cv::Mat mapping_map_;
 
     float map_origin_position_x = -1;
 
