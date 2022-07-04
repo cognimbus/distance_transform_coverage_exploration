@@ -591,6 +591,7 @@ public:
 
         float pixDist = (1.0 / mapResolution_) * distBetweenGoalsM_;
 
+        cerr<<"pixDist "<<pixDist<<" distBetweenGoalsM_ "<<distBetweenGoalsM_<<endl; 
         return (int)pixDist;
     }
 
@@ -1037,48 +1038,12 @@ public:
 
             switch (coverage_state_)
             {   
-                // case INIT_INITIAL_GOAL_START:
-                // {
-                //     cerr << " INIT_INITIAL_GOAL_START " << endl;
-
-                //     currentAlgoMap_ = getCurrentMap();
-
-                //     auto currentPosition = convertPoseToPix(robotPose_);
-
-                //     int valGlo = currentAlgoMap_.at<uchar>(currentPosition.y, currentPosition.x);
-                    
-                  
-                //     // calculate the first goal
-                //     auto res = goalCalculator.getInitialGoal(currentAlgoMap_,
-                //                                             currentPosition,
-                //                                             goalCoveragePoint_,
-                //                                             getDistanceBetweenGoalsPix());
-
-                //     if (!res)
-                //     {
-                //         cerr << " failed to calculate the goalCoveragePoint_ " << endl;
-                //         coverage_state_ = ERROR_COVERAGE;
-                //         break;
-                //     }
-
-                //     publishGoalConverage(convertPixToPose(goalCoveragePoint_));
-
-                //     cerr<<" goalCoveragePoint_  "<<goalCoveragePoint_<<endl;
-
-                //     circle(currentAlgoMap_,goalCoveragePoint_, 5, Scalar(150), -1, 8, 0);      
-
-                //     imwrite("/home/yakir/distance_transform_coverage_ws/1.pgm",currentAlgoMap_);
-
-                //     coverage_state_ = COVERAGE;
-                    
-                //     break;
-                // }
+                
                 case COVERAGE:
                 {
                     cerr << " COVERAGE " << endl;
 
                     currentAlgoMap_ = getCurrentMap();
-
 
                     // calculate goal-distance-transform-map
                     cv::Mat distanceTransformImg;
@@ -1089,9 +1054,7 @@ public:
 
 
                     cv::Point2d goal(463,228);
-                    goal = fixLocationOnGrid(goal, currentPosition);
-
-                   
+                    goal = fixLocationOnGrid(goal, currentPosition);                   
 
 
                     // // calc the distance-transform-img from current goal

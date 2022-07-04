@@ -51,7 +51,6 @@ enum Direction
 
 enum COVERAGE_STATE
 {   
-    INIT_INITIAL_GOAL_START,
     COVERAGE,
     COVERAGE_DONE,
     ERROR_COVERAGE

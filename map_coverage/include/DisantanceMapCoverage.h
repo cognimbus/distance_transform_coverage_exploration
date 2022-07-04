@@ -20,7 +20,7 @@ using namespace std;
 #ifndef DISTANCE_MAP_COVERAGE_H
 #define DISTANCE_MAP_COVERAGE_H
 
-#define DEBUG 1
+#define DEBUG 0
 
 class DisantanceMapCoverage
 {
@@ -48,14 +48,14 @@ public:
         std::map<string, cv::Point> son_father;
 
         if (DEBUG){
-            circle(grayScaleImg,start, 5, Scalar(0, 0, 255), -1, 8, 0);      
-            circle(grayScaleImg,goal, 5, Scalar(0, 100, 0), -1, 8, 0); 
+            // circle(grayScaleImg,start, 5, Scalar(0, 0, 255), -1, 8, 0);      
+            // circle(grayScaleImg,goal, 5, Scalar(0, 100, 0), -1, 8, 0); 
 
             cerr<<" start  "<<start<<" goal "<<goal<<endl;
-            imshow("step1",grayScaleImg);
-            waitKey(0);  
+            // imshow("step1",grayScaleImg);
+            // waitKey(0);  
 
-            imwrite("/home/yakir/distance_transform_coverage_ws/step1.png",grayScaleImg);
+            // imwrite("/home/yakir/distance_transform_coverage_ws/step1.png",grayScaleImg);
         }
 
 
@@ -76,20 +76,20 @@ public:
                                            currentP, NeighborCell, grayScaleImg, dist_between_points);
 
             
-            if( foundN && stopWhenGoalReached){
+            // if( foundN && stopWhenGoalReached){
                 
-                float currPvalue =
-                     distanceTransformImg.at<int>(currentP.y, currentP.x);
-                float dist = manhattan_distance(currentP, goal);
-                if ( (dist <= float(dist_between_points) * 1) ||
-                    currPvalue <= dist_between_points )
-                {   
+            //     float currPvalue =
+            //          distanceTransformImg.at<int>(currentP.y, currentP.x);
+            //     float dist = manhattan_distance(currentP, goal);
+            //     if ( (dist <= float(dist_between_points) * 1) ||
+            //         currPvalue <= dist_between_points )
+            //     {   
 
-                    cerr<<"11111111111111111111111111111 "<<endl;
+            //         cerr<<"11111111111111111111111111111 "<<endl;
 
-                    break;
-                }
-            }
+            //         break;
+            //     }
+            // }
 
             // if not found
             if (!foundN)
