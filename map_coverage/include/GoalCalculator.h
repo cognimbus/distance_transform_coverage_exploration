@@ -476,7 +476,7 @@ public:
         // sort the frontier
         std::sort( currentEdgesFrontiers.begin(), currentEdgesFrontiers.end(),
               []( const Frontier &left, const Frontier &right )
-                 { return ( left.contour.size() > right.contour.size() ); } );
+                 { return ( left.distFromPosition < right.distFromPosition ); } );
 
         //calculate map score
         

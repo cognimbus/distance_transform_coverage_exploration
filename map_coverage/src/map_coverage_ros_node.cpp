@@ -591,7 +591,6 @@ public:
 
         float pixDist = (1.0 / mapResolution_) * distBetweenGoalsM_;
 
-        cerr<<"pixDist "<<pixDist<<" distBetweenGoalsM_ "<<distBetweenGoalsM_<<endl; 
         return (int)pixDist;
     }
 
@@ -890,32 +889,24 @@ public:
 
             if (!init_)
             {
-                m = "map not recieved !!";
-                // cerr << m << endl;
+                cerr << "map not recieved !!" << endl;
 
                 continue;;
             }
 
             if ( !updateRobotLocation())
             {
-                // m = "can't update robot location !!";
-                cerr << m << endl;
+                cerr << "can't update robot location !!" << endl;
 
                 continue;
-            }
-
-            // if ( coverageDone() ){
-
-            //     m = " BACK_TO_GLOBAL_START ";
-            //     cerr<<m<<endl;
-
-            //     coverage_state_ = BACK_TO_GLOBAL_START;
-            // }
+            }           
 
             switch (explore_state_){
 
                 case NAV_TO_SAFEST_GOAL:
-                {
+                {   
+
+                    cerr<<" NAV_TO_SAFEST_GOAL "<<endl;
                     currentAlgoMap_ = getCurrentMap();
                     globalStart_ = convertPoseToPix(robotPose_);
 
@@ -962,12 +953,17 @@ public:
                     cerr<<"map exploration score: "<<mapScore<<endl;
 
 
-                    if( mapScore > nim_map_score_to_finish_exploration_){
+                    // if( mapScore > nim_map_score_to_finish_exploration_){
+
+                    //     explore_state_ = FINISH_EXPLORE;
+                    //     break;
+                    // }
+
+                    if( currentEdgesFrontiers.size() < 2){
 
                         explore_state_ = FINISH_EXPLORE;
                         break;
                     }
-
                     if( currentEdgesFrontiers.size() == 0){
                         cerr<<" there is no frontiers "<<endl;
                         explore_state_ = FINISH_EXPLORE;
@@ -1053,8 +1049,7 @@ public:
                     cerr<<" currentPosition "<<currentPosition<<endl;
 
 
-                    cv::Point2d goal(463,228);
-                    goal = fixLocationOnGrid(goal, currentPosition);                   
+                    cv::Point2d goal = currentPosition;
 
 
                     // // calc the distance-transform-img from current goal
@@ -1070,8 +1065,10 @@ public:
                     Mat grayDistImg;
                     distanceTransformGoalCalculator.normalizeDistanceTransform(distanceTransformImg, grayDistImg);
 
-                    imwrite("/home/yakir/distance_transform_coverage_ws/distanceTransformImg.pgm",distanceTransformImg);
 
+                    Mat dbg = currentAlgoMap_.clone();
+
+                    cvtColor(dbg, dbg, COLOR_GRAY2BGR);
 
                     // calc the path-coverage of the current blob
 
@@ -1083,11 +1080,20 @@ public:
 
                     for( int i = 0; i < path.size(); i++){
 
-                        circle(currentAlgoMap_,path[i], 2, Scalar(100), -1, 8, 0);  
+                        circle(dbg, path[i], 2, Scalar(0,255,255), -1, 8, 0);  
 
-                    }                                        
+                        if( i > 0 ){
+                            cv::line(dbg, path[i], path[i - 1], Scalar(0, 255, 255), 2);
+                        }
 
-                    imwrite("/home/yakir/distance_transform_coverage_ws/1.pgm",currentAlgoMap_);
+                    }    
+
+                    circle(dbg, goal, 2, Scalar(0,255,0), -1, 8, 0);
+                    circle(dbg, currentPosition, 2, Scalar(0,0,255), -1, 8, 0);   
+                                    
+
+                    imwrite("dbg.png",dbg);
+                    imwrite("distanceTransformImg.pgm",distanceTransformImg);
 
 
 
