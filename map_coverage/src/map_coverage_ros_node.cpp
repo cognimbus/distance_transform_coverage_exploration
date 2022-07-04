@@ -1083,10 +1083,10 @@ public:
                         circle(dbg, path[i], 2, Scalar(0,255,255), -1, 8, 0);  
 
                         if( i > 0 ){
-                            cv::line(dbg, path[i], path[i - 1], Scalar(0, 255, 255), 2);
+                            cv::line(dbg, path[i], path[i - 1], Scalar(34, 139, 139), 2);
                         }
 
-                    }    
+                    }     
 
                     circle(dbg, goal, 2, Scalar(0,255,0), -1, 8, 0);
                     circle(dbg, currentPosition, 2, Scalar(0,0,255), -1, 8, 0);   

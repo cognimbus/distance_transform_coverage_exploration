@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /Path1
+        - /Path2
         - /LaserScan1
       Splitter Ratio: 0.5
     Tree Height: 549
@@ -28,7 +29,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -94,7 +95,7 @@ Visualization Manager:
       Marker Topic: /safest_goal
       Name: Marker
       Namespaces:
-        {}
+        points_and_lines: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -152,7 +153,7 @@ Visualization Manager:
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
-      Color: 204; 0; 0
+      Color: 173; 127; 168
       Enabled: true
       Head Diameter: 0.30000001192092896
       Head Length: 0.20000000298023224
@@ -229,7 +230,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 16.902414321899414
+      Distance: 12.574615478515625
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -245,9 +246,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3447965383529663
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 2.2953996658325195
+      Yaw: 3.1004035472869873
     Saved: ~
 Window Geometry:
   Displays:
