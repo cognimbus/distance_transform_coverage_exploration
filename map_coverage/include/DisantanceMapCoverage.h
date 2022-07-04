@@ -20,7 +20,7 @@ using namespace std;
 #ifndef DISTANCE_MAP_COVERAGE_H
 #define DISTANCE_MAP_COVERAGE_H
 
-#define DEBUG 0
+#define DEBUG 1
 
 class DisantanceMapCoverage
 {
@@ -51,9 +51,11 @@ public:
             circle(grayScaleImg,start, 5, Scalar(0, 0, 255), -1, 8, 0);      
             circle(grayScaleImg,goal, 5, Scalar(0, 100, 0), -1, 8, 0); 
 
-            // cerr<<" start  "<<start<<" goal "<<goal<<endl;
-            // imshow("step1",grayScaleImg);
-            // waitKey(0);  
+            cerr<<" start  "<<start<<" goal "<<goal<<endl;
+            imshow("step1",grayScaleImg);
+            waitKey(0);  
+
+            imwrite("/home/yakir/distance_transform_coverage_ws/step1.png",grayScaleImg);
         }
 
 
@@ -73,8 +75,7 @@ public:
             bool foundN = findNeighborCell(distanceTransformImg, visitedCells,
                                            currentP, NeighborCell, grayScaleImg, dist_between_points);
 
-            // imshow("grayScaleImg", grayScaleImg);
-            // waitKey(0);
+            
             if( foundN && stopWhenGoalReached){
                 
                 float currPvalue =
@@ -83,6 +84,9 @@ public:
                 if ( (dist <= float(dist_between_points) * 1) ||
                     currPvalue <= dist_between_points )
                 {   
+
+                    cerr<<"11111111111111111111111111111 "<<endl;
+
                     break;
                 }
             }
@@ -97,6 +101,9 @@ public:
                 if ( (dist <= float(dist_between_points) * 1) ||
                     currPvalue <= dist_between_points )
                 {   
+
+                    cerr<<"222222222222222222222222222 "<<endl;
+
                     break;
                 }
                 
@@ -107,7 +114,7 @@ public:
                 string pString = getPointString(currentP);
                 if( son_father.find(pString) == son_father.end()){
                     
-                    // cerr<<"reached to start again "<<endl;
+                    cerr<<"reached to start again "<<endl;
                     break;
                 }
                 cv::Point father = son_father.at(pString);
@@ -124,7 +131,7 @@ public:
                     circle(grayScaleImg,currentP, 4, Scalar(0, 100, 255), -1, 8, 0);   
                 }
                  if( DEBUG){
-                      imshow("grayScaleImg",grayScaleImg);
+                    imshow("grayScaleImg",grayScaleImg);
                     waitKey(0); 
                  }
                

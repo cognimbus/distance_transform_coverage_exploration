@@ -28,7 +28,7 @@ public:
 
         resolution_ = resolution;
     }
-    bool calcDistanceTransfromGoal(const Mat &map, const cv::Point2d &goal,
+    bool calcDistanceTransfromImg(const Mat &map, const cv::Point2d &goal,
                                    cv::Mat &outputDistanceTransformImg, int mapIndex)
     {
 
@@ -41,6 +41,41 @@ public:
         cv::Mat imgMap = map.clone();
         imgMap.setTo(255, imgMap == 254);
         imgMap.setTo(0, imgMap != 255);
+
+        // pick the contour that contains the goal
+
+        vector<vector<Point>> contours;
+        vector<Vec4i> hierarchy;
+
+        findContours(imgMap, contours, hierarchy, RETR_EXTERNAL,
+                     CHAIN_APPROX_NONE, Point(0, 0));
+
+        if( contours.size() == 0 ){
+
+            return false;
+        }             
+
+        bool foundCont = false;
+        for( int i =0; i < contours.size(); i++ ){
+
+            if ( pointPolygonTest(contours[i], goal, false) > 0){
+                
+                foundCont = true;
+            } else {
+                
+                drawContours(imgMap, contours, i, Scalar(0), -1 );
+ 
+            }
+        }
+
+        if( !foundCont){
+            return false;
+        }
+
+
+
+        // imshow("imgMap",imgMap);
+        // waitKey(0);
 
         outputDistanceTransformImg = cv::Mat(map.rows,
                                              map.cols, CV_32S, cv::Scalar(LARGE_NUM));

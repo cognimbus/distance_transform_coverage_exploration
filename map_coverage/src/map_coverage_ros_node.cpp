@@ -247,7 +247,7 @@ public:
         robotMarker.color.r = 0.2;
         robotMarker.color.g = 0.8;
         robotMarker.color.b = 1.0;
-        robotMarker.lifetime = ros::Duration(0);
+        robotMarker.lifetime = ros::Duration(200);
 
        safest_goal_marker_pub_.publish(robotMarker);
     }
@@ -304,7 +304,7 @@ public:
         robotMarker.header.frame_id = mapFrame_;
         robotMarker.header.stamp = ros::Time::now();
         robotMarker.ns = "points_and_lines";
-        robotMarker.id = 2;
+        robotMarker.id = 111111;
         robotMarker.action = visualization_msgs::Marker::ADD;
         robotMarker.type = visualization_msgs::Marker::SPHERE;
         robotMarker.pose.position = pose.pose.position;
@@ -362,6 +362,29 @@ public:
         currentGlobalMap_ = occupancyGridMatToGrayScale(tmp.clone());
 
         addDilationForGlobalMap(currentGlobalMap_, robot_radius_meters_);
+
+        addFreeSpaceDilation(currentGlobalMap_);
+
+        
+    }
+
+
+    void addFreeSpaceDilation(Mat& grayscaleImg) {
+
+        Mat binary  = cv::Mat(grayscaleImg.rows, grayscaleImg.cols, 
+            CV_8UC1, cv::Scalar(0));
+
+        binary.setTo(255, grayscaleImg >= 254); 
+        dilate(binary, binary, Mat(), Point(-1, -1), 1, 1, 1);     
+
+        Mat newImg  = cv::Mat(grayscaleImg.rows, grayscaleImg.cols, 
+            CV_8UC1, cv::Scalar(205));
+
+        newImg.setTo(254, binary >= 254); 
+        newImg.setTo(0, grayscaleImg == 0); 
+
+        grayscaleImg = newImg;
+
     }
 
     void updateCurrentBlobsFrontiers(double old_origin_x, double old_origin_y,
@@ -637,18 +660,18 @@ public:
 
    
 
-    cv::Point fixLocationOnGrid(const cv::Point &goal)
+    cv::Point fixLocationOnGrid(const cv::Point &goal, const cv::Point& ref)
     {
 
-        int detlaY = abs(goal.y + globalStart_.y) % getDistanceBetweenGoalsPix();
-        int detlaX = abs(goal.x + globalStart_.x) % getDistanceBetweenGoalsPix();
+        int detlaY = abs(goal.y + ref.y) % getDistanceBetweenGoalsPix();
+        int detlaX = abs(goal.x + ref.x) % getDistanceBetweenGoalsPix();
 
         cv::Point p(goal.x - detlaX, goal.y - detlaY);
         int val = currentAlgoMap_.at<uchar>(p.y, p.x);
         if (val == free_space)
         {
-            detlaY = abs(p.y + globalStart_.y) % getDistanceBetweenGoalsPix();
-            detlaX = abs(p.x + globalStart_.x) % getDistanceBetweenGoalsPix();
+            detlaY = abs(p.y + ref.y) % getDistanceBetweenGoalsPix();
+            detlaX = abs(p.x + ref.x) % getDistanceBetweenGoalsPix();
 
             return p;
         }
@@ -903,17 +926,19 @@ public:
                         break;
                     }
 
-                    safestGoal = fixLocationOnGrid(safestGoal);
+                    safestGoal = fixLocationOnGrid(safestGoal, globalStart_);
 
                     publishSafestGoalMarker(convertPixToPose(safestGoal));
+                    publishSafestGoalMarker(convertPixToPose(safestGoal));
 
-                    cerr<<" safestGoal "<<safestGoal<<endl;
+
+                    cerr<<"exploration: safestGoal "<<safestGoal<<endl;
 
                     moveBaseController_.navigate(convertPixToPose(safestGoal));
 
                     bool result = moveBaseController_.wait();  
 
-                    cerr<<"result "<<result<<endl;                            
+                    cerr<<"exploration: mov_base_result "<<result<<endl;                            
 
                     explore_state_ = NAV_TO_NEXT_FRONTIER;
 
@@ -933,7 +958,7 @@ public:
                     mapScore = goalCalculator.calcEdgesFrontiers(currentAlgoMap_,
                                           currentEdgesFrontiers, robotPix);
 
-                    cerr<<"mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm "<<mapScore<<endl;
+                    cerr<<"map exploration score: "<<mapScore<<endl;
 
 
                     if( mapScore > nim_map_score_to_finish_exploration_){
@@ -957,7 +982,7 @@ public:
 
                     bool result = moveBaseController_.wait();  
 
-                    cerr<<"result tttttttttttttttttttttttttttt"<<result<<endl;
+                    cerr<<"move_base result "<<result<<endl;
 
                     
                     explore_state_ = NAV_TO_NEXT_FRONTIER;
@@ -1012,69 +1037,97 @@ public:
 
             switch (coverage_state_)
             {   
-                case INIT_INITIAL_GOAL_START:
-                {
-                    cerr << " INIT_INITIAL_GOAL_START " << endl;
+                // case INIT_INITIAL_GOAL_START:
+                // {
+                //     cerr << " INIT_INITIAL_GOAL_START " << endl;
 
-                    currentAlgoMap_ = getCurrentMap();
+                //     currentAlgoMap_ = getCurrentMap();
 
-                    globalStart_ = convertPoseToPix(robotPose_);
-                    startCoveragePoint_ = convertPoseToPix(robotPose_);
+                //     auto currentPosition = convertPoseToPix(robotPose_);
 
-                    int valGlo = currentAlgoMap_.at<uchar>(globalStart_.y, globalStart_.x);
+                //     int valGlo = currentAlgoMap_.at<uchar>(currentPosition.y, currentPosition.x);
                     
-                    // 
-                    if (valGlo != free_space)
-                    {
+                  
+                //     // calculate the first goal
+                //     auto res = goalCalculator.getInitialGoal(currentAlgoMap_,
+                //                                             currentPosition,
+                //                                             goalCoveragePoint_,
+                //                                             getDistanceBetweenGoalsPix());
 
-                        globalStart_ = fixStartLocation(globalStart_);
-                        valGlo = currentAlgoMap_.at<uchar>(globalStart_.y, globalStart_.x);
+                //     if (!res)
+                //     {
+                //         cerr << " failed to calculate the goalCoveragePoint_ " << endl;
+                //         coverage_state_ = ERROR_COVERAGE;
+                //         break;
+                //     }
 
-                        startCoveragePoint_ = cv::Point(globalStart_.x,
-                                                        globalStart_.y);
-                    }
+                //     publishGoalConverage(convertPixToPose(goalCoveragePoint_));
 
-                    // calculate the first goal
-                    auto res = goalCalculator.getInitialGoal(currentAlgoMap_,
-                                                            startCoveragePoint_,
-                                                            goalCoveragePoint_,
-                                                            getDistanceBetweenGoalsPix(),
-                                                            globalStart_);
+                //     cerr<<" goalCoveragePoint_  "<<goalCoveragePoint_<<endl;
 
-                    if (!res)
-                    {
-                        cerr << " first map bad !!  " << endl;
-                        coverage_state_ = ERROR_COVERAGE;
-                        break;
-                    }
+                //     circle(currentAlgoMap_,goalCoveragePoint_, 5, Scalar(150), -1, 8, 0);      
 
-                    goalCoveragePoint_ = fixLocationOnGrid(goalCoveragePoint_);
+                //     imwrite("/home/yakir/distance_transform_coverage_ws/1.pgm",currentAlgoMap_);
 
-                    publishStartConverage(convertPixToPose(globalStart_));
-                    publishGoalConverage(convertPixToPose(goalCoveragePoint_));
-
-                    publishGlobalStartMarker(convertPixToPose(globalStart_));
-
-                    coverage_state_ = COVERAGE;
+                //     coverage_state_ = COVERAGE;
                     
-                    break;
-                }
+                //     break;
+                // }
                 case COVERAGE:
                 {
                     cerr << " COVERAGE " << endl;
 
+                    currentAlgoMap_ = getCurrentMap();
+
+
                     // calculate goal-distance-transform-map
                     cv::Mat distanceTransformImg;
 
-                    // calc the distance-transform-img from current goal
-                    distanceTransformGoalCalculator.calcDistanceTransfromGoal(currentAlgoMap_,
-                                                                            goalCoveragePoint_, distanceTransformImg, 1);
+                    auto currentPosition = convertPoseToPix(robotPose_);
+
+                    cerr<<" currentPosition "<<currentPosition<<endl;
+
+
+                    cv::Point2d goal(463,228);
+                    goal = fixLocationOnGrid(goal, currentPosition);
+
+                   
+
+
+                    // // calc the distance-transform-img from current goal
+                    if( !distanceTransformGoalCalculator.calcDistanceTransfromImg(currentAlgoMap_,
+                        currentPosition, distanceTransformImg, 1)){
+
+                        cerr<<" failed to calcutate the disntace transform img"<<endl;   
+                        coverage_state_ = ERROR_COVERAGE;
+                        break;
+ 
+                    }
+
+                    Mat grayDistImg;
+                    distanceTransformGoalCalculator.normalizeDistanceTransform(distanceTransformImg, grayDistImg);
+
+                    imwrite("/home/yakir/distance_transform_coverage_ws/distanceTransformImg.pgm",distanceTransformImg);
+
 
                     // calc the path-coverage of the current blob
 
                     vector<cv::Point> path =
-                        disantanceMapCoverage.getCoveragePath(currentAlgoMap_, startCoveragePoint_,
-                                                            goalCoveragePoint_, distanceTransformImg, getDistanceBetweenGoalsPix(), true);
+                        disantanceMapCoverage.getCoveragePath(currentAlgoMap_, currentPosition,
+                                                            goal, distanceTransformImg, getDistanceBetweenGoalsPix(), true);          
+
+
+
+                    for( int i = 0; i < path.size(); i++){
+
+                        circle(currentAlgoMap_,path[i], 2, Scalar(100), -1, 8, 0);  
+
+                    }                                        
+
+                    imwrite("/home/yakir/distance_transform_coverage_ws/1.pgm",currentAlgoMap_);
+
+
+
 
                     // convert the path into poses
                     vector<geometry_msgs::PoseStamped> coveragePathPoses = covertPointsPathToPoseRout(path);
@@ -1106,6 +1159,12 @@ public:
 
                     break;
                 }
+                case COVERAGE_DONE:
+                {
+                       
+                    coverage_state_ = COVERAGE_DONE;
+                    break;
+                }
                 case ERROR_COVERAGE:
                 {
 
@@ -1121,7 +1180,7 @@ public:
     }
 
 private:
-    COVERAGE_STATE coverage_state_ = COVERAGE_STATE::INIT_INITIAL_GOAL_START;
+    COVERAGE_STATE coverage_state_ = COVERAGE_STATE::COVERAGE;
 
     EXPLORE_STATE explore_state_ = EXPLORE_STATE::NAV_TO_SAFEST_GOAL;
 

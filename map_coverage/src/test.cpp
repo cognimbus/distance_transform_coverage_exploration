@@ -210,7 +210,7 @@ int main(int, char **)
         }
 
       
-        distanceTransformGoalCalculator.calcDistanceTransfromGoal(currentMap, 
+        distanceTransformGoalCalculator.calcDistanceTransfromImg(currentMap, 
             goalCoverage, distanceTransformImg, 1);
 
         cv::Mat grayScaledImg;

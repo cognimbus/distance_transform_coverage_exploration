@@ -69,11 +69,8 @@ public:
     }
     bool getInitialGoal(const Mat& map , 
          const cv::Point& currentPosition, 
-          cv::Point& goal, int dist_between_points,
-          const cv::Point& globalStart){
-        
+          cv::Point& goal, int dist_between_points ){  
 
-        cerr<<"111111111111111111111111111111111111111 "<<endl;
         
       
         
@@ -81,7 +78,6 @@ public:
         img.setTo(255, img >= 254);
         img.setTo(0, img != 255);
 
-        cerr<<"2222222222222222222222222222222222 "<<endl;
 
         vector<vector<Point>> contours;
         vector<Vec4i> hierarchy;
@@ -89,7 +85,6 @@ public:
                      CHAIN_APPROX_NONE, Point(0, 0));
 
 
-        cerr<<"33333333333333333333333333333333 "<<endl;
 
        
 

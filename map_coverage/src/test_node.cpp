@@ -248,7 +248,7 @@ int main(int argc, char** argv)
 
 
     // calc the distance-transform-img from current goal
-    distanceTransformGoalCalculator.calcDistanceTransfromGoal(currentAlgoMap_, 
+    distanceTransformGoalCalculator.calcDistanceTransfromImg(currentAlgoMap_, 
             goalCoveragePoint, distanceTransformImg, 1);
 
 
