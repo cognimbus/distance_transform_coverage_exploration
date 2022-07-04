@@ -1080,7 +1080,6 @@ public:
 
                     for( int i = 0; i < path.size(); i++){
 
-                        circle(dbg, path[i], 2, Scalar(34, 139, 139), -1, 8, 0);  
 
                         if( i > 0 ){
                             cv::line(dbg, path[i], path[i - 1], Scalar(34, 139, 139), 2);
