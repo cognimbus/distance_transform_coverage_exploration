@@ -68,14 +68,45 @@
 #include <ros/package.h>
 #include <iostream>
 
-using namespace cv;
+#include <numeric>
+#include <iostream>
+#include <mutex>
+#include <thread>
+#include <chrono>
+#include <math.h>
+#include <stdlib.h>
+#include <ctime>
 
+using namespace cv;
+using namespace std::chrono;
 using namespace std;
 
 #include "../include/DisantanceMapCoverage.h"
 #include "../include/GoalCalculator.h"
 #include "../include/MoveBaseController.h"
 
+geometry_msgs::PoseStamped startingLocation_;
+string startingTime_;
+
+
+string getCurrentTime(){ 
+
+
+    time_t rawtime;
+    struct tm * timeinfo;
+    char buffer [80];
+
+    time (&rawtime);
+    timeinfo = localtime (&rawtime);
+
+    strftime (buffer,80,"%F/%H_%M",timeinfo);
+    string curr_time_Str = strdup(buffer);
+    std::replace( curr_time_Str.begin(), curr_time_Str.end(), '/', '_');
+
+    cerr<<curr_time_Str<<endl;
+
+    return curr_time_Str;    
+}
 
 
 void addDilationForGlobalMap(Mat &imgMap, float robot_radius_meters_, float mapResolution)
@@ -137,6 +168,13 @@ public:
         nodePrivate.param("robot_raduis", robot_radius_meters_, 0.3);
         nodePrivate.param("exploration_score", nim_map_score_to_finish_exploration_, 70.0);
 
+        nodePrivate.param("/coverage/percentage", percentCoverage_, 0.0);
+    
+        nodePrivate.param("/coverage/state", state_, string("INITIALIZING"));
+
+        nodePrivate.param("/coverage/image_path", coverage_img_path_, string(""));  
+        nodePrivate.param("/coverage/image_name", image_name_, string(""));  
+    
 
         // subs
         global_map_sub_ =
@@ -171,6 +209,9 @@ public:
         mapResolution_ = -1;
         map_origin_position_x = -1;
         map_origin_position_y = -1;
+
+        startingCoverageTime_ = high_resolution_clock::now();
+
 
 
     }
@@ -931,9 +972,16 @@ public:
                 case NAV_TO_SAFEST_GOAL:
                 {   
 
+                    node_.setParam("/coverage/state", "RUNNING");
+
+
                     cerr<<" NAV_TO_SAFEST_GOAL "<<endl;
                     currentAlgoMap_ = getCurrentMap();
                     globalStart_ = convertPoseToPix(robotPose_);
+
+                    startingLocation_ = robotPose_;
+
+                    startingTime_ = getCurrentTime();
 
                     cv::Point safestGoal;
                     if (!goalCalculator.findSafestLocation(currentAlgoMap_, globalStart_, safestGoal))
@@ -1015,6 +1063,7 @@ public:
                 }
                 case ERROR_EXPLORE:
                 {
+                    node_.setParam("/coverage/state", "STOPPED");
 
                     cerr<<"ERROR_EXPLORE "<<endl;
                     break;
@@ -1098,17 +1147,17 @@ public:
 
                     // calc the path-coverage of the current blob
 
-                    vector<cv::Point> path =
+                    path_ =
                         disantanceMapCoverage.getCoveragePath(currentAlgoMap_, currentPosition,
                                                             goal, distanceTransformImg, getDistanceBetweenGoalsPix(), true);          
 
 
 
-                    for( int i = 0; i < path.size(); i++){
+                    for( int i = 0; i < path_.size(); i++){
 
 
                         if( i > 0 ){
-                            cv::line(dbg, path[i], path[i - 1], Scalar(34, 139, 139), 2);
+                            cv::line(dbg, path_[i], path_[i - 1], Scalar(34, 139, 139), 2);
                         }
 
                     }     
@@ -1124,17 +1173,21 @@ public:
 
 
                     // convert the path into poses
-                    vector<geometry_msgs::PoseStamped> coveragePathPoses = covertPointsPathToPoseRout(path);
+                    coveragePathPoses_ = covertPointsPathToPoseRout(path_);
 
                     // exectute currnet navigation the blob-coverage
-                    cerr << " num of coverage waypoints " << coveragePathPoses.size() << endl;
-                    for (int i = 0; i < coveragePathPoses.size(); i++)
-                    {
+                    cerr << " num of coverage waypoints " << coveragePathPoses_.size() << endl;
+                    for (int i = 0; i < coveragePathPoses_.size(); i++)
+                    {   
 
-                        publishCoveragePath(coveragePathPoses);
-                        publishCoverageWayPoints(coveragePathPoses, i);
+                        percentCoverage_ = (i / coveragePathPoses_.size())  * 100;
+                        node_.setParam("/coverage/percentage", percentCoverage_);
 
-                        moveBaseController_.navigate(coveragePathPoses[i]);
+                        
+                        publishCoveragePath(coveragePathPoses_);
+                        publishCoverageWayPoints(coveragePathPoses_, i);
+
+                        moveBaseController_.navigate(coveragePathPoses_[i]);
 
                         bool result = moveBaseController_.wait(); //  blocked
                         if (result)
@@ -1147,20 +1200,38 @@ public:
                         }
                     }
 
-                    coverage_state_ = COVERAGE_DONE;
+                    coverage_state_ = BACK_TO_STARTING_LOCATION;
 
                     prevAlgoMap_ = currentAlgoMap_.clone();
 
                     break;
                 }
+                case BACK_TO_STARTING_LOCATION:
+                {   
+                    cerr<<" BACK_TO_STARTING_LOCATION "<<endl;   
+
+                    moveBaseController_.navigate(startingLocation_); 
+
+                    coverage_state_ = COVERAGE_DONE;  
+                    
+                }
                 case COVERAGE_DONE:
                 {
-                       
+                    cerr<<" COVERAGE_DONE "<<endl;  
+
+                    node_.setParam("/coverage/state", "STOPPED");
+                    
+                    saveCoverageImg();
+
                     coverage_state_ = COVERAGE_DONE;
                     break;
                 }
+                
                 case ERROR_COVERAGE:
-                {
+                {   
+                    cerr<<" ERROR_COVERAGE "<<endl;  
+                    
+                    node_.setParam("/coverage/state", "STOPPED");
 
                     coverage_state_ = ERROR_COVERAGE;
                     break;
@@ -1171,6 +1242,48 @@ public:
         }
 
        
+    }   
+
+    
+    void saveCoverageImg(){
+
+        if( !imgSaved_ && mapping_map_.data){
+
+            
+            Mat coverageImg = mapping_map_.clone();
+            cvtColor(coverageImg, coverageImg, COLOR_GRAY2BGR);
+
+            // draw the path  
+
+            for( int i = 0; i < path_.size(); i++){
+
+                if( i > 0 ){
+                    cv::line(coverageImg, path_[i], path_[i - 1], Scalar(34, 139, 139), 2);
+                }             
+            }
+
+            /*
+                Hi yakir,  can you change the file format  to these:
+                YYYY_MM_DD_HH_MM_(Duration_in_mins)_percentage.png for sorting purpose.
+                For "rosparam set /disinfect_report" use the same format YYYY_MM_DD_HH_MM_(Duration_in_mins)_percentage without .png extension.
+
+            */
+            
+
+            auto end = high_resolution_clock::now();
+            auto durationCoverage = duration_cast<seconds>(end - startingCoverageTime_);
+
+            int durationMinutes = durationCoverage.count() / 60;
+           
+
+            string image_name_format = startingTime_ + '_' +to_string(durationMinutes)+ '_' + to_string(int(percentCoverage_));
+            string full_img_name = coverage_img_path_ + "/"+image_name_format+".png";
+            node_.setParam("/coverage/image_name", image_name_format);
+
+            cv::imwrite(full_img_name, coverageImg);
+
+            imgSaved_ = true;
+        }
     }
 
 private:
@@ -1180,6 +1293,9 @@ private:
 
     // move-base
     MoveBaseController moveBaseController_;
+
+    vector<geometry_msgs::PoseStamped> coveragePathPoses_;
+    vector<cv::Point> path_;
 
     // subs
     ros::Subscriber global_map_sub_;
@@ -1274,11 +1390,29 @@ private:
     double robot_radius_meters_ = 0.3;
 
     double nim_map_score_to_finish_exploration_ = 70.0;
+
+    double percentCoverage_ = 0.0;
+
+    string coverage_img_path_ = "";
+
+    string image_name_ = "";
+
+    string state_ = "INITIALIZING";
+
+    
+
+    bool imgSaved_ = false;
+
+    high_resolution_clock::time_point startingCoverageTime_;
+
 };
+
+
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "map_coverage_exploration_node");
+
 
     MapCoverageManager mapCoverageManager;
     if ( mapCoverageManager.exlpore()) {

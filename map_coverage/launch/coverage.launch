@@ -4,6 +4,8 @@
     <arg name="robot_raduis" default="0.2" />  
     <arg name="map_dilation_level_m" default="1" />  
 
+    <arg name="coverage_img_path" default="$(find map_coverage)/" />   
+
     <arg name="exploration_score" default="70.0" />      
 
    
