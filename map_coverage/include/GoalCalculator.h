@@ -20,16 +20,14 @@ public:
     ~GoalCalculator() {}
 
     bool findSafestLocation(const Mat& map,  const cv::Point& start,
-         cv::Point& goal) {
+         cv::Point& goal) {   
 
-   
-
-        int valGlo = map.at<uchar>(start.y, start.x);
-        if(valGlo != free_space){     
+        // int valGlo = map.at<uchar>(start.y, start.x);
+        // if(valGlo != free_space){     
             
-            cerr<<" robot not on free_space valGlo "<<valGlo<<endl;
-            return false;
-        }
+        //     cerr<<" robot not on free_space valGlo "<<valGlo<<endl;
+        //     return false;
+        // }
         cv::Mat binary = map.clone();
         binary.setTo(255, binary > 250);
         binary.setTo(0, binary != 255); 
