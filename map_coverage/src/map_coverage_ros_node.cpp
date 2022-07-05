@@ -463,7 +463,9 @@ public:
             {
 
                 cv::Point pixP = currentEdgesFrontiers[i].contour[j];
-                geometry_msgs::PoseStamped p = convertPixToPose(pixP);
+                geometry_msgs::Quaternion q;
+                q.w = 1;
+                geometry_msgs::PoseStamped p = convertPixToPose(pixP, q);
 
                 visualization_msgs::Marker pOnEgge;
                 pOnEgge.header.frame_id = mapFrame_;
@@ -558,7 +560,8 @@ public:
         return p;
     }
 
-    geometry_msgs::PoseStamped convertPixToPose(const cv::Point &pixel)
+    geometry_msgs::PoseStamped convertPixToPose(const cv::Point &pixel, 
+        geometry_msgs::Quaternion q )
     {
 
         geometry_msgs::PoseStamped pose;
@@ -569,10 +572,23 @@ public:
         pose.pose.position.y = (pixel.y * mapResolution_) + map_origin_position_y;
         pose.pose.position.z = 0.0;
 
-        pose.pose.orientation.x = 0;
-        pose.pose.orientation.y = 0;
-        pose.pose.orientation.z = 0;
-        pose.pose.orientation.w = 1;
+        if( q.w != 0.0){
+
+            pose.pose.orientation.w = q.w;
+            pose.pose.orientation.x = q.x;
+            pose.pose.orientation.y = q.y;
+            pose.pose.orientation.z = q.z;
+
+
+        } else {
+            
+            pose.pose.orientation.x = 0;
+            pose.pose.orientation.y = 0;
+            pose.pose.orientation.z = 0;
+            pose.pose.orientation.w = 1;
+
+        }
+       
 
         return pose;
     }
@@ -586,7 +602,7 @@ public:
 
     void setStartLocation()
     {
-
+            
         startCoveragePoint_ = convertPoseToPix(robotPose_);
     }
 
@@ -607,23 +623,23 @@ public:
         float prevAngle = 0.0;
         for (int i = 0; i < pointsPath.size(); i++)
         {
-
-            geometry_msgs::PoseStamped pose;
-            pose = convertPixToPose(pointsPath[i]);
-            pose.header.frame_id = mapFrame_;
-            pose.header.stamp = ros::Time::now();
-
+            
             float angle = atan2(pointsPath[i + 1].y - pointsPath[i].y,
                                 pointsPath[i + 1].x - pointsPath[i].x);
-
             tf2::Quaternion orientation;
             orientation.setRPY(0, 0, angle);
+            geometry_msgs::Quaternion q;
+            q.w = orientation.getW();
+            q.x = orientation.getX();
+            q.y = orientation.getY();
+            q.z = orientation.getZ();
 
-            pose.pose.orientation.w = orientation.getW();
-            pose.pose.orientation.x = orientation.getX();
-            pose.pose.orientation.y = orientation.getY();
-            pose.pose.orientation.z = orientation.getZ();
+            geometry_msgs::PoseStamped pose;
+            pose = convertPixToPose(pointsPath[i], q);         
+            pose.header.frame_id = mapFrame_;
+            pose.header.stamp = ros::Time::now();    
 
+            
             /*
              * if this is the first waypoint or the last we added it,
              * else we add only the uniqu direction of waypoints
@@ -924,13 +940,13 @@ public:
 
                     safestGoal = fixLocationOnGrid(safestGoal, globalStart_);
 
-                    publishSafestGoalMarker(convertPixToPose(safestGoal));
-                    publishSafestGoalMarker(convertPixToPose(safestGoal));
+                    publishSafestGoalMarker(convertPixToPose(safestGoal, robotPose_.pose.orientation));
+                    publishSafestGoalMarker(convertPixToPose(safestGoal, robotPose_.pose.orientation));
 
 
                     cerr<<"exploration: safestGoal "<<safestGoal<<endl;
 
-                    moveBaseController_.navigate(convertPixToPose(safestGoal));
+                    moveBaseController_.navigate(convertPixToPose(safestGoal, robotPose_.pose.orientation));
 
                     bool result = moveBaseController_.wait();  
 
@@ -974,7 +990,9 @@ public:
                         break;
                     }
 
-                    auto nextFrontierGoal = convertPixToPose(currentEdgesFrontiers[0].center);
+                    geometry_msgs::Quaternion q;
+                    q.w = 1;
+                    auto nextFrontierGoal = convertPixToPose(currentEdgesFrontiers[0].center, q);
                     publishSafestGoalMarker(nextFrontierGoal);
                     publishEdgesFrontiers(currentEdgesFrontiers);
 
