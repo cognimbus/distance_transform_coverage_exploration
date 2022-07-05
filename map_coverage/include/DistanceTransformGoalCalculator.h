@@ -35,7 +35,7 @@ public:
         if (goal.y < 0 || goal.x < 0 || goal.y > map.rows || goal.x > map.cols)
         {
 
-            cerr << "error out of map !! " << endl;
+            cerr << "error goal out of map !! " << endl;
             return false;
         }
         cv::Mat imgMap = map.clone();
@@ -49,9 +49,13 @@ public:
 
         findContours(imgMap, contours, hierarchy, RETR_EXTERNAL,
                      CHAIN_APPROX_NONE, Point(0, 0));
-
+        
+        // imshow("imgMap",imgMap);
+        // waitKey(0);
+        
         if( contours.size() == 0 ){
 
+            cerr<<" DistanceTransformGoalCalculator no contours"<<endl;
             return false;
         }             
 
@@ -68,7 +72,13 @@ public:
             }
         }
 
+        // imshow("imgMap",imgMap);
+        // waitKey(0);
+
         if( !foundCont){
+
+            cerr<<" DistanceTransformGoalCalculator foundCont false"<<endl;
+
             return false;
         }
 

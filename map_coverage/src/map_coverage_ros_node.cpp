@@ -76,6 +76,48 @@ using namespace std;
 #include "../include/GoalCalculator.h"
 #include "../include/MoveBaseController.h"
 
+
+
+void addDilationForGlobalMap(Mat &imgMap, float robot_radius_meters_, float mapResolution)
+{
+
+    try
+    {
+        int dilationPix = (1.0 / mapResolution) * (robot_radius_meters_ * 2);        
+
+        cv::Mat binary = imgMap.clone();
+        binary.setTo(0, imgMap != 0);
+        binary.setTo(255, imgMap == 0); 
+        dilate(binary, binary, Mat(), Point(-1, -1), dilationPix, 1, 1);
+
+        imgMap.setTo(0, binary == 255);
+    }
+    catch (cv::Exception &e)
+    {
+        const char *err_msg = e.what();
+        std::cerr << "exception caught: " << err_msg << std::endl;
+    }
+}
+
+ void addFreeSpaceDilation(Mat& grayscaleImg) {
+
+        Mat binary  = cv::Mat(grayscaleImg.rows, grayscaleImg.cols, 
+            CV_8UC1, cv::Scalar(0));
+
+        binary.setTo(255, grayscaleImg >= 254); 
+        dilate(binary, binary, Mat(), Point(-1, -1), 1, 1, 1);     
+
+        Mat newImg  = cv::Mat(grayscaleImg.rows, grayscaleImg.cols, 
+            CV_8UC1, cv::Scalar(205));
+
+        newImg.setTo(254, binary >= 254); 
+        newImg.setTo(0, grayscaleImg == 0); 
+
+        grayscaleImg = newImg;
+
+    }
+
+
 class MapCoverageManager
 {
 
@@ -135,26 +177,7 @@ public:
 
     ~MapCoverageManager() {}
 
-    void addDilationForGlobalMap(Mat &imgMap, float robot_radius_meters_)
-    {
-
-        try
-        {
-            int dilationPix = (1.0 / mapResolution_) * (robot_radius_meters_ * 2);        
-
-            cv::Mat binary = imgMap.clone();
-            binary.setTo(0, imgMap != 0);
-            binary.setTo(255, imgMap == 0); 
-            dilate(binary, binary, Mat(), Point(-1, -1), dilationPix, 1, 1);
-
-            imgMap.setTo(0, binary == 255);
-        }
-        catch (cv::Exception &e)
-        {
-            const char *err_msg = e.what();
-            std::cerr << "exception caught: " << err_msg << std::endl;
-        }
-    }
+    
 
     Mat occupancyGridMatToGrayScale(const Mat &map)
     {
@@ -365,32 +388,14 @@ public:
         mapping_map_ = currentGlobalMap_.clone();
 
 
-        addDilationForGlobalMap(currentGlobalMap_, robot_radius_meters_);
+        addDilationForGlobalMap(currentGlobalMap_, robot_radius_meters_, mapResolution_);
 
         addFreeSpaceDilation(currentGlobalMap_);
 
         
     }
 
-
-    void addFreeSpaceDilation(Mat& grayscaleImg) {
-
-        Mat binary  = cv::Mat(grayscaleImg.rows, grayscaleImg.cols, 
-            CV_8UC1, cv::Scalar(0));
-
-        binary.setTo(255, grayscaleImg >= 254); 
-        dilate(binary, binary, Mat(), Point(-1, -1), 1, 1, 1);     
-
-        Mat newImg  = cv::Mat(grayscaleImg.rows, grayscaleImg.cols, 
-            CV_8UC1, cv::Scalar(205));
-
-        newImg.setTo(254, binary >= 254); 
-        newImg.setTo(0, grayscaleImg == 0); 
-
-        grayscaleImg = newImg;
-
-    }
-
+   
     void updateCurrentBlobsFrontiers(double old_origin_x, double old_origin_y,
                                      double new_origin_x, double new_origin_y,
                                      double deltaW, double deltaH)
@@ -1285,3 +1290,75 @@ int main(int argc, char **argv)
 
     return 0;
 }
+
+
+// int main(int argc, char **argv)
+// {
+//     ros::init(argc, argv, "map_coverage_exploration_node");
+
+//     DistanceTransformGoalCalculator distanceTransformGoalCalculator;
+//     DisantanceMapCoverage disantanceMapCoverage(true);
+//     GoalCalculator goalCalculator;
+
+//     float mapResolution_ = 0.05;
+//     float distBetweenGoalsM_ = 0.5;
+//     int pixDist = (1.0 / mapResolution_) * distBetweenGoalsM_;
+//     float robot_radius_meters_ = 0.3;
+
+//     Mat currentAlgoMap_ = imread("/home/yakir/distance_transform_coverage_ws/map.pgm",0);
+//     cv::flip(currentAlgoMap_, currentAlgoMap_, 0);
+//     Mat mappingMap = currentAlgoMap_.clone();
+//     imshow("currentAlgoMap_",currentAlgoMap_);
+//     waitKey(0);
+
+//     addDilationForGlobalMap(currentAlgoMap_, robot_radius_meters_, mapResolution_);
+//     addFreeSpaceDilation(currentAlgoMap_);
+
+//     cv::Mat distanceTransformImg;
+
+//     cv::Point2d currentPosition(380, 207);
+//     cv::Point2d goal = currentPosition;
+//     // // calc the distance-transform-img from current goal
+//     if( !distanceTransformGoalCalculator.calcDistanceTransfromImg(currentAlgoMap_,
+//         currentPosition, distanceTransformImg, 1)){
+
+//         cerr<<" failed to calcutate the disntace transform img"<<endl;   
+//         return -1;
+
+//     }
+
+//     Mat grayDistImg;
+//     distanceTransformGoalCalculator.normalizeDistanceTransform(distanceTransformImg, grayDistImg);
+
+
+//     Mat dbg = mappingMap.clone();
+//     cvtColor(dbg, dbg, COLOR_GRAY2BGR);
+
+//     // calc the path-coverage of the current blob
+
+//     vector<cv::Point> path =
+//         disantanceMapCoverage.getCoveragePath(currentAlgoMap_, currentPosition,
+//                                             goal, distanceTransformImg, pixDist, true);          
+
+
+
+//     for( int i = 0; i < path.size(); i++){
+
+
+//         if( i > 0 ){
+//             cv::line(dbg, path[i], path[i - 1], Scalar(34, 139, 139), 2);
+//         }
+
+//     }     
+
+//     circle(dbg, goal, 2, Scalar(0,255,0), -1, 8, 0);
+//     circle(dbg, currentPosition, 2, Scalar(0,0,255), -1, 8, 0);  
+
+//     imwrite("/home/yakir/distance_transform_coverage_ws/dbg.png", dbg);
+//     imshow("dbg",dbg);
+//     // imshow("distanceTransformImg", grayDistImg);
+//     waitKey(0);
+                    
+
+//     return 0;
+// }

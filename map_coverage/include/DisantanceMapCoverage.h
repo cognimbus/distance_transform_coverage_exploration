@@ -20,12 +20,16 @@ using namespace std;
 #ifndef DISTANCE_MAP_COVERAGE_H
 #define DISTANCE_MAP_COVERAGE_H
 
-#define DEBUG 0
 
 class DisantanceMapCoverage
 {
 public:
-    DisantanceMapCoverage() {}
+    DisantanceMapCoverage(bool debug = false) {
+
+        debug_ = debug;
+
+        cerr<<" DisantanceMapCoverage debug_ "<<debug_<<endl;
+    }
 
     ~DisantanceMapCoverage() {}
 
@@ -46,28 +50,16 @@ public:
         cv::Point currentP(start.x, start.y);
 
         std::map<string, cv::Point> son_father;
-
-        if (DEBUG){
-            // circle(grayScaleImg,start, 5, Scalar(0, 0, 255), -1, 8, 0);      
-            // circle(grayScaleImg,goal, 5, Scalar(0, 100, 0), -1, 8, 0); 
-
-            cerr<<" start  "<<start<<" goal "<<goal<<endl;
-            // imshow("step1",grayScaleImg);
-            // waitKey(0);  
-
-            // imwrite("/home/yakir/distance_transform_coverage_ws/step1.png",grayScaleImg);
-        }
-
-
+        
         do
         {
 
-            if (path.size() > 0 && DEBUG)
+            if (path.size() > 0 && debug_)
             {
                 cv::line(grayScaleImg, currentP, path[path.size() - 1], Scalar(255, 255, 0), 2);
             }
 
-            if( DEBUG)
+            if( debug_)
                 circle(grayScaleImg, currentP, 2, Scalar(0, 255, 255), -1, 8, 0);
 
             // try no find valid neighbor with largest distance
@@ -123,14 +115,14 @@ public:
                 NeighborCell = father;
                 currentP = father;
 
-                if( DEBUG){
+                if( debug_){
                     grayScaleImg.at<cv::Vec3b>(NeighborCell.y, NeighborCell.x)[0] = 255;
                     grayScaleImg.at<cv::Vec3b>(NeighborCell.y, NeighborCell.x)[1] = 255;
                     grayScaleImg.at<cv::Vec3b>(NeighborCell.y, NeighborCell.x)[2] = 0;
 
                     circle(grayScaleImg,currentP, 4, Scalar(0, 100, 255), -1, 8, 0);   
                 }
-                 if( DEBUG){
+                if( debug_){
                     imshow("grayScaleImg",grayScaleImg);
                     waitKey(0); 
                  }
@@ -139,7 +131,7 @@ public:
             }
 
 
-            if (DEBUG)
+            if (debug_)
             {
                 grayScaleImg.at<cv::Vec3b>(NeighborCell.y, NeighborCell.x)[0] = 255;
                 grayScaleImg.at<cv::Vec3b>(NeighborCell.y, NeighborCell.x)[1] = 255;
@@ -155,7 +147,7 @@ public:
 
                 visitedCells.at<uchar>(currentP.y, currentP.x) = VISITED;
 
-                if (DEBUG)
+                if (debug_)
                 {
 
                     grayScaleImg.at<cv::Vec3b>(currentP.y, currentP.x)[0] = 0;
@@ -179,7 +171,7 @@ public:
 
                 visitedCells.at<uchar>(currentP.y, currentP.x) = VISITED;
 
-                if (DEBUG)
+                if (debug_)
                 {
 
                     grayScaleImg.at<cv::Vec3b>(currentP.y, currentP.x)[0] = 0;
@@ -196,7 +188,7 @@ public:
                 currentP = NeighborCell;
             }
 
-            if (DEBUG){
+            if (debug_){
 
                  circle(grayScaleImg,currentP, 4, Scalar(255, 0, 0), -1, 8, 0);   
 
@@ -304,7 +296,7 @@ private:
                 visitedCellsNe[direction] = false;
             }
 
-            if (validCells[direction] && DEBUG)
+            if (validCells[direction] && debug_)
             {
 
                 if (visitedCellsNe[direction])
@@ -420,6 +412,10 @@ private:
 
         return false;
     }
+
+private:
+    
+    bool  debug_ = false;    
 };
 
 #endif
