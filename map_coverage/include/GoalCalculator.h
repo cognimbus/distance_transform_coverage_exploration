@@ -22,9 +22,7 @@ public:
     bool findSafestLocation(const Mat& map,  const cv::Point& start,
          cv::Point& goal) {
 
-        
-        imshow("map", map);
-        waitKey(0);
+   
 
         int valGlo = map.at<uchar>(start.y, start.x);
         if(valGlo != free_space){     
@@ -37,8 +35,8 @@ public:
         binary.setTo(0, binary != 255); 
         dilate(binary, binary, Mat(), Point(-1, -1), 3, 1, 1);
 
-        imshow("binary",binary);
-        waitKey(0);
+        // imshow("binary",binary);
+        // waitKey(0);
    
 
         Mat dist;
