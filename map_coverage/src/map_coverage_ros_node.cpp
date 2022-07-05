@@ -1016,7 +1016,7 @@ public:
                 case ERROR_EXPLORE:
                 {
 
-                    // cerr<<"ERROR_EXPLORE "<<endl;
+                    cerr<<"ERROR_EXPLORE "<<endl;
                     break;
                 }
                 case FINISH_EXPLORE:
@@ -1303,61 +1303,83 @@ int main(int argc, char **argv)
 //     float mapResolution_ = 0.05;
 //     float distBetweenGoalsM_ = 0.5;
 //     int pixDist = (1.0 / mapResolution_) * distBetweenGoalsM_;
-//     float robot_radius_meters_ = 0.3;
+//     float robot_radius_meters_ = 0.0;
 
 //     Mat currentAlgoMap_ = imread("/home/yakir/distance_transform_coverage_ws/map.pgm",0);
 //     cv::flip(currentAlgoMap_, currentAlgoMap_, 0);
-//     Mat mappingMap = currentAlgoMap_.clone();
-//     imshow("currentAlgoMap_",currentAlgoMap_);
-//     waitKey(0);
+//     Mat mappingMap = currentAlgoMap_.clone();  
 
+   
 //     addDilationForGlobalMap(currentAlgoMap_, robot_radius_meters_, mapResolution_);
 //     addFreeSpaceDilation(currentAlgoMap_);
 
-//     cv::Mat distanceTransformImg;
+//     if( true) {
+        
+//         cerr<<"yakir "<<endl;
+//         cv::Point globalStart_(80,118);
+//         cv::Point safestGoal;
 
-//     cv::Point2d currentPosition(380, 207);
-//     cv::Point2d goal = currentPosition;
-//     // // calc the distance-transform-img from current goal
-//     if( !distanceTransformGoalCalculator.calcDistanceTransfromImg(currentAlgoMap_,
-//         currentPosition, distanceTransformImg, 1)){
+             
+//         imshow("currentAlgoMap_", currentAlgoMap_);
+//         waitKey(0);
+//         if (!goalCalculator.findSafestLocation(currentAlgoMap_, globalStart_, safestGoal))
+//         {
 
-//         cerr<<" failed to calcutate the disntace transform img"<<endl;   
-//         return -1;
-
-//     }
-
-//     Mat grayDistImg;
-//     distanceTransformGoalCalculator.normalizeDistanceTransform(distanceTransformImg, grayDistImg);
-
-
-//     Mat dbg = mappingMap.clone();
-//     cvtColor(dbg, dbg, COLOR_GRAY2BGR);
-
-//     // calc the path-coverage of the current blob
-
-//     vector<cv::Point> path =
-//         disantanceMapCoverage.getCoveragePath(currentAlgoMap_, currentPosition,
-//                                             goal, distanceTransformImg, pixDist, true);          
-
-
-
-//     for( int i = 0; i < path.size(); i++){
-
-
-//         if( i > 0 ){
-//             cv::line(dbg, path[i], path[i - 1], Scalar(34, 139, 139), 2);
+//             return -1;
 //         }
 
-//     }     
+//         return 0;
+//     }
 
-//     circle(dbg, goal, 2, Scalar(0,255,0), -1, 8, 0);
-//     circle(dbg, currentPosition, 2, Scalar(0,0,255), -1, 8, 0);  
+//     if( false) {
 
-//     imwrite("/home/yakir/distance_transform_coverage_ws/dbg.png", dbg);
-//     imshow("dbg",dbg);
-//     // imshow("distanceTransformImg", grayDistImg);
-//     waitKey(0);
+//         cv::Mat distanceTransformImg;
+
+//         cv::Point2d currentPosition(380, 207);
+//         cv::Point2d goal = currentPosition;
+//         // // calc the distance-transform-img from current goal
+//         if( !distanceTransformGoalCalculator.calcDistanceTransfromImg(currentAlgoMap_,
+//             currentPosition, distanceTransformImg, 1)){
+
+//             cerr<<" failed to calcutate the disntace transform img"<<endl;   
+//             return -1;
+
+//         }
+
+//         Mat grayDistImg;
+//         distanceTransformGoalCalculator.normalizeDistanceTransform(distanceTransformImg, grayDistImg);
+
+
+//         Mat dbg = mappingMap.clone();
+//         cvtColor(dbg, dbg, COLOR_GRAY2BGR);
+
+//         // calc the path-coverage of the current blob
+
+//         vector<cv::Point> path =
+//             disantanceMapCoverage.getCoveragePath(currentAlgoMap_, currentPosition,
+//                                                 goal, distanceTransformImg, pixDist, true);          
+
+
+
+//         for( int i = 0; i < path.size(); i++){
+
+
+//             if( i > 0 ){
+//                 cv::line(dbg, path[i], path[i - 1], Scalar(34, 139, 139), 2);
+//             }
+
+//         }     
+
+//         circle(dbg, goal, 2, Scalar(0,255,0), -1, 8, 0);
+//         circle(dbg, currentPosition, 2, Scalar(0,0,255), -1, 8, 0);  
+
+//         imwrite("/home/yakir/distance_transform_coverage_ws/dbg.png", dbg);
+//         imshow("dbg",dbg);
+//         // imshow("distanceTransformImg", grayDistImg);
+//         waitKey(0);
+//     }
+
+    
                     
 
 //     return 0;

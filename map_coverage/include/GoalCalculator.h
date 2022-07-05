@@ -22,10 +22,14 @@ public:
     bool findSafestLocation(const Mat& map,  const cv::Point& start,
          cv::Point& goal) {
 
+        
+        imshow("map", map);
+        waitKey(0);
 
         int valGlo = map.at<uchar>(start.y, start.x);
         if(valGlo != free_space){     
             
+            cerr<<" robot not on free_space valGlo "<<valGlo<<endl;
             return false;
         }
         cv::Mat binary = map.clone();
@@ -33,8 +37,8 @@ public:
         binary.setTo(0, binary != 255); 
         dilate(binary, binary, Mat(), Point(-1, -1), 3, 1, 1);
 
-        // imshow("binary",binary);
-        // waitKey(0);
+        imshow("binary",binary);
+        waitKey(0);
    
 
         Mat dist;

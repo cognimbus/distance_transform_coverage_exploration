@@ -1,7 +1,9 @@
 <launch>   
 
     <arg name="distance_between_goals_m" default="0.5" />  
-    <arg name="robot_raduis" default="0.3" />  
+    <arg name="robot_raduis" default="0.0" />  
+    <arg name="map_dilation_level_m" default="1" />  
+
     <arg name="exploration_score" default="70.0" />      
 
    
@@ -12,6 +14,8 @@
             <param name="distance_between_goals_m" value="$(arg distance_between_goals_m)" /> 
             <param name="robot_raduis" value="$(arg robot_raduis)" /> 
             <param name="exploration_score" value="$(arg exploration_score)" /> 
+            <param name="map_dilation_level_m" value="$(arg map_dilation_level_m)" /> 
+
 
        
     </node>
