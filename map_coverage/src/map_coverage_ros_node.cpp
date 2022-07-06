@@ -169,7 +169,7 @@ public:
         nodePrivate.param("duration_wait_for_move_base_response", duration_wait_for_move_base_response_, 15.0);
         nodePrivate.param<string>("/coverage/image_path", coverage_img_path_, string(""));  
 
-
+        cerr<<coverage_img_path_<<endl;
 
         nodePrivate.param("/coverage/percentage", percentCoverage_, 0.0);    
         nodePrivate.param("/coverage/state", state_, string("INITIALIZING"));
@@ -1194,9 +1194,9 @@ public:
                         percentCoverage_ = ( float(i) / float(coveragePathPoses_.size()))  * 100.0;
                         node_.setParam("/coverage/percentage", percentCoverage_);
 
-                        cerr<<node_.getParam("/coverage/image_path",coverage_img_path_)<<endl;
+                      
 
-                        saveCoverageImg();
+                        // saveCoverageImg();
 
                         
                         publishCoveragePath(coveragePathPoses_);
@@ -1294,6 +1294,8 @@ public:
             auto end = ros::WallTime::now();
             auto duration = (end - start).toSec();
 
+            updateRobotLocation();
+
             float distFromGoal = 
                      goalCalculator.distanceCalculate( cv::Point2d(robotPose_.pose.position.x, robotPose_.pose.position.y),
                          cv::Point2d(goalMsg.pose.position.x, goalMsg.pose.position.y));
@@ -1347,7 +1349,8 @@ public:
            
 
             string image_name_format = startingTime_ + '_' +to_string(durationMinutes)+ '_' + to_string(int(percentCoverage_));
-            string full_img_name =  to_string(node_.getParam("/coverage/image_path",coverage_img_path_)) + "/"+image_name_format+".png";
+            string full_img_name =  node_.getParam("/coverage/image_path",coverage_img_path_) + "/"+image_name_format+".png";
+
             node_.setParam("/coverage/image_name", image_name_format);
 
             cerr<<"full_img_name: "<<full_img_name<<endl;
