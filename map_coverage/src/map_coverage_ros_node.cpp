@@ -167,14 +167,23 @@ public:
         nodePrivate.param("robot_raduis", robot_radius_meters_, 0.3);
         nodePrivate.param("exploration_score", nim_map_score_to_finish_exploration_, 70.0);
         nodePrivate.param("duration_wait_for_move_base_response", duration_wait_for_move_base_response_, 15.0);
-        nodePrivate.param<string>("/coverage/image_path", coverage_img_path_, string(""));  
-
-        cerr<<coverage_img_path_<<endl;
+        nodePrivate.param<string>("coverage_image_path", coverage_img_path_, string(""));  
+        nodePrivate.param<string>("base_frame", baseFrame_, string("base_link"));  
+        nodePrivate.param<string>("global_frame", globalFrame_, string("map"));  
 
         nodePrivate.param("/coverage/percentage", percentCoverage_, 0.0);    
         nodePrivate.param("/coverage/state", state_, string("INITIALIZING"));
         nodePrivate.param("/coverage/image_name", image_name_, string(""));  
-    
+
+
+
+        cerr<<"base_frame "<<baseFrame_<<endl;
+
+        cerr<<"coverage_img_path_ "<<coverage_img_path_<<endl;
+
+
+        
+       
 
         // subs
         global_map_sub_ =
@@ -253,7 +262,7 @@ public:
     {
 
         visualization_msgs::Marker robotMarker;
-        robotMarker.header.frame_id = mapFrame_;
+        robotMarker.header.frame_id = globalFrame_;
         robotMarker.header.stamp = ros::Time::now();
         robotMarker.ns = "points_and_lines";
         robotMarker.id = 1;
@@ -275,7 +284,7 @@ public:
     {
 
         visualization_msgs::Marker robotMarker;
-        robotMarker.header.frame_id = mapFrame_;
+        robotMarker.header.frame_id = globalFrame_;
         robotMarker.header.stamp = ros::Time::now();
         robotMarker.ns = "points_and_lines";
         robotMarker.id = 1;
@@ -297,7 +306,7 @@ public:
     {
 
         visualization_msgs::Marker robotMarker;
-        robotMarker.header.frame_id = mapFrame_;
+        robotMarker.header.frame_id = globalFrame_;
         robotMarker.header.stamp = ros::Time::now();
         robotMarker.ns = "points_and_lines";
         robotMarker.id = 1;
@@ -320,7 +329,7 @@ public:
     {
 
         visualization_msgs::Marker robotMarker;
-        robotMarker.header.frame_id = mapFrame_;
+        robotMarker.header.frame_id = globalFrame_;
         robotMarker.header.stamp = ros::Time::now();
         robotMarker.ns = "points_and_lines";
         robotMarker.id = 1;
@@ -343,7 +352,7 @@ public:
     {
 
         visualization_msgs::Marker robotMarker;
-        robotMarker.header.frame_id = mapFrame_;
+        robotMarker.header.frame_id = globalFrame_;
         robotMarker.header.stamp = ros::Time::now();
         robotMarker.ns = "points_and_lines";
         robotMarker.id = 1;
@@ -365,7 +374,7 @@ public:
     {
 
         visualization_msgs::Marker robotMarker;
-        robotMarker.header.frame_id = mapFrame_;
+        robotMarker.header.frame_id = globalFrame_;
         robotMarker.header.stamp = ros::Time::now();
         robotMarker.ns = "points_and_lines";
         robotMarker.id = 111111;
@@ -471,7 +480,7 @@ public:
         try
         {
             // get current robot pose
-            tfListener_.lookupTransform(mapFrame_, baseLinkFrame_,
+            tfListener_.lookupTransform(globalFrame_, baseFrame_,
                                         ros::Time(0), transform);
 
             robotPose_.pose.position.x = transform.getOrigin().x();
@@ -487,7 +496,7 @@ public:
 
         catch (...)
         {
-            cerr << " error between " << mapFrame_ << " to " << baseLinkFrame_ << endl;
+            cerr << " error between " << globalFrame_ << " to " << baseFrame_ << endl;
             return false;
         }
     }
@@ -514,7 +523,7 @@ public:
                 geometry_msgs::PoseStamped p = convertPixToPose(pixP, q);
 
                 visualization_msgs::Marker pOnEgge;
-                pOnEgge.header.frame_id = mapFrame_;
+                pOnEgge.header.frame_id = globalFrame_;
                 pOnEgge.header.stamp = ros::Time::now();
                 pOnEgge.ns = "points_and_lines";
                 pOnEgge.id = count;
@@ -556,7 +565,7 @@ public:
             geometry_msgs::PoseStamped p = coveragePathPoses[i];
 
             visualization_msgs::Marker pOnEgge;
-            pOnEgge.header.frame_id = mapFrame_;
+            pOnEgge.header.frame_id = globalFrame_;
             pOnEgge.header.stamp = ros::Time::now();
             pOnEgge.ns = "points_and_lines";
             pOnEgge.id = i + 1;
@@ -682,7 +691,7 @@ public:
 
             geometry_msgs::PoseStamped pose;
             pose = convertPixToPose(pointsPath[i], q);         
-            pose.header.frame_id = mapFrame_;
+            pose.header.frame_id = globalFrame_;
             pose.header.stamp = ros::Time::now();    
 
             
@@ -1349,8 +1358,7 @@ public:
            
 
             string image_name_format = startingTime_ + '_' +to_string(durationMinutes)+ '_' + to_string(int(percentCoverage_));
-            // string full_img_name =  node_.getParam("/coverage/image_path",coverage_img_path_) + "/"+image_name_format+".png";
-            string full_img_name = "/home/haystack/haystack_disinfect_report_images/" +image_name_format+".png";
+            string full_img_name = coverage_img_path_ + "/"+image_name_format+".png";
             node_.setParam("/coverage/image_name", image_name_format);
 
             cerr<<"full_img_name: "<<full_img_name<<endl;
@@ -1454,9 +1462,9 @@ private:
 
     tf::TransformListener tfListener_;
 
-    string mapFrame_ = "odom";
+    string globalFrame_ = "odom";
 
-    string baseLinkFrame_ = "base_footprint";
+    string baseFrame_ = "base_footprint";
 
 
     double robot_radius_meters_ = 0.3;
