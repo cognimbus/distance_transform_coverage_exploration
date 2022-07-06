@@ -1349,8 +1349,8 @@ public:
            
 
             string image_name_format = startingTime_ + '_' +to_string(durationMinutes)+ '_' + to_string(int(percentCoverage_));
-            string full_img_name =  node_.getParam("/coverage/image_path",coverage_img_path_) + "/"+image_name_format+".png";
-
+            // string full_img_name =  node_.getParam("/coverage/image_path",coverage_img_path_) + "/"+image_name_format+".png";
+            string full_img_name = "/home/haystack/haystack_disinfect_report_images/" +image_name_format+".png";
             node_.setParam("/coverage/image_name", image_name_format);
 
             cerr<<"full_img_name: "<<full_img_name<<endl;
