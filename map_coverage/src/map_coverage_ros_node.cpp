@@ -164,15 +164,15 @@ public:
         // rosparam
         ros::NodeHandle nodePrivate("~");
         nodePrivate.param("distance_between_goals_m", distBetweenGoalsM_, 0.5);
-        nodePrivate.param("map_dilation_level_m", map_dilation_level_, 0.0);
         nodePrivate.param("robot_raduis", robot_radius_meters_, 0.3);
         nodePrivate.param("exploration_score", nim_map_score_to_finish_exploration_, 70.0);
+        nodePrivate.param("duration_wait_for_move_base_response", duration_wait_for_move_base_response_, 15.0);
+        nodePrivate.param<string>("/coverage/image_path", coverage_img_path_, string(""));  
 
-        nodePrivate.param("/coverage/percentage", percentCoverage_, 0.0);
-    
+
+
+        nodePrivate.param("/coverage/percentage", percentCoverage_, 0.0);    
         nodePrivate.param("/coverage/state", state_, string("INITIALIZING"));
-
-        nodePrivate.param("/coverage/image_path", coverage_img_path_, string(""));  
         nodePrivate.param("/coverage/image_name", image_name_, string(""));  
     
 
@@ -999,9 +999,7 @@ public:
 
                     cerr<<"exploration: safestGoal "<<safestGoal<<endl;
 
-                    moveBaseController_.navigate(convertPixToPose(safestGoal, robotPose_.pose.orientation));
-
-                    bool result = moveBaseController_.wait();  
+                    bool result = sendGoal(convertPixToPose(safestGoal, robotPose_.pose.orientation));  
 
                     cerr<<"exploration: mov_base_result "<<result<<endl;                            
 
@@ -1024,24 +1022,14 @@ public:
                                           currentEdgesFrontiers, robotPix);
 
                     cerr<<"map exploration score: "<<mapScore<<endl;
-
-
-                    // if( mapScore > nim_map_score_to_finish_exploration_){
-
-                    //     explore_state_ = FINISH_EXPLORE;
-                    //     break;
-                    // }
+                    
 
                     if( currentEdgesFrontiers.size() < 2){
 
                         explore_state_ = FINISH_EXPLORE;
                         break;
                     }
-                    if( currentEdgesFrontiers.size() == 0){
-                        cerr<<" there is no frontiers "<<endl;
-                        explore_state_ = FINISH_EXPLORE;
-                        break;
-                    }
+                    
 
                     geometry_msgs::Quaternion q;
                     q.w = 1;
@@ -1049,12 +1037,9 @@ public:
                     publishSafestGoalMarker(nextFrontierGoal);
                     publishEdgesFrontiers(currentEdgesFrontiers);
 
+                    bool result = sendGoal(nextFrontierGoal);
 
-                    moveBaseController_.navigate(nextFrontierGoal);
-
-                    bool result = moveBaseController_.wait();  
-
-                    cerr<<"move_base result "<<result<<endl;
+                    cerr<<"move_base result for NAV_TO_NEXT_FRONTIER "<<result<<endl;
 
                     
                     explore_state_ = NAV_TO_NEXT_FRONTIER;
@@ -1072,6 +1057,32 @@ public:
                 {
 
                     cerr<<"FINISH_EXPLORE "<<endl;
+
+                    currentAlgoMap_ = getCurrentMap();
+                    globalStart_ = convertPoseToPix(robotPose_);
+
+                    cv::Point safestGoal;
+                    if (!goalCalculator.findSafestLocation(currentAlgoMap_, globalStart_, safestGoal))
+                    {
+                        
+                        cerr<<"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb "<<endl;
+                        return true;
+                    }
+
+                    safestGoal = fixLocationOnGrid(safestGoal, globalStart_);
+
+                    publishSafestGoalMarker(convertPixToPose(safestGoal, robotPose_.pose.orientation));
+                    publishSafestGoalMarker(convertPixToPose(safestGoal, robotPose_.pose.orientation));
+
+
+                    cerr<<"exploration FINISH_EXPLORE: safestGoal "<<safestGoal<<endl;
+
+                    bool result = sendGoal(convertPixToPose(safestGoal, robotPose_.pose.orientation));  
+
+                    cerr<<"exploration: mov_base_result "<<result<<endl;   
+
+                    ros::Duration(1).sleep();
+     
                     
                     return true;
                 }
@@ -1142,8 +1153,8 @@ public:
                     distanceTransformGoalCalculator.normalizeDistanceTransform(distanceTransformImg, grayDistImg);
 
 
-                    Mat dbg = mapping_map_.clone();
-                    cvtColor(dbg, dbg, COLOR_GRAY2BGR);
+                    // Mat dbg = mapping_map_.clone();
+                    // cvtColor(dbg, dbg, COLOR_GRAY2BGR);
 
                     // calc the path-coverage of the current blob
 
@@ -1153,21 +1164,21 @@ public:
 
 
 
-                    for( int i = 0; i < path_.size(); i++){
+                    // for( int i = 0; i < path_.size(); i++){
 
 
-                        if( i > 0 ){
-                            cv::line(dbg, path_[i], path_[i - 1], Scalar(34, 139, 139), 2);
-                        }
+                    //     if( i > 0 ){
+                    //         cv::line(dbg, path_[i], path_[i - 1], Scalar(34, 139, 139), 2);
+                    //     }
 
-                    }     
+                    // }     
 
-                    circle(dbg, goal, 2, Scalar(0,255,0), -1, 8, 0);
-                    circle(dbg, currentPosition, 2, Scalar(0,0,255), -1, 8, 0);   
+                    // circle(dbg, goal, 2, Scalar(0,255,0), -1, 8, 0);
+                    // circle(dbg, currentPosition, 2, Scalar(0,0,255), -1, 8, 0);   
                                     
 
-                    imwrite(ros::package::getPath("map_coverage") + "/dbg.png",dbg);
-                    imwrite(ros::package::getPath("map_coverage") + "/distanceTransformImg.pgm",distanceTransformImg);
+                    // imwrite(ros::package::getPath("map_coverage") + "/dbg.png",dbg);
+                    // imwrite(ros::package::getPath("map_coverage") + "/distanceTransformImg.pgm",distanceTransformImg);
 
 
 
@@ -1180,16 +1191,19 @@ public:
                     for (int i = 0; i < coveragePathPoses_.size(); i++)
                     {   
 
-                        percentCoverage_ = (i / coveragePathPoses_.size())  * 100;
+                        percentCoverage_ = ( float(i) / float(coveragePathPoses_.size()))  * 100.0;
                         node_.setParam("/coverage/percentage", percentCoverage_);
+
+                        cerr<<node_.getParam("/coverage/image_path",coverage_img_path_)<<endl;
+
+                        saveCoverageImg();
 
                         
                         publishCoveragePath(coveragePathPoses_);
                         publishCoverageWayPoints(coveragePathPoses_, i);
 
-                        moveBaseController_.navigate(coveragePathPoses_[i]);
+                        bool result = sendGoal(coveragePathPoses_[i]);
 
-                        bool result = moveBaseController_.wait(); //  blocked
                         if (result)
                         {
                             cerr << i << ": Waypoint reached!" << endl;
@@ -1210,7 +1224,16 @@ public:
                 {   
                     cerr<<" BACK_TO_STARTING_LOCATION "<<endl;   
 
-                    moveBaseController_.navigate(startingLocation_); 
+                    bool result = sendGoal(startingLocation_);
+
+                    if (result)
+                    {
+                        cerr <<"BACK_TO_STARTING_LOCATION reached!" << endl;
+                    }
+                    else
+                    {
+                        cerr <<" Failed to reach BACK_TO_STARTING_LOCATION" << endl;
+                    }
 
                     coverage_state_ = COVERAGE_DONE;  
                     
@@ -1244,12 +1267,57 @@ public:
        
     }   
 
+    bool  sendGoal(const geometry_msgs::PoseStamped &goalMsg)
+    {      
+
+        //navigate to the point			
+        moveBaseController_.navigate(goalMsg);
+
+        auto start = ros::WallTime::now();
+        bool result = true;
+        while(ros::ok()) {
+
+            moveBaseController_.moveBaseClient_.waitForResult(ros::Duration(0.1));
+
+            if( moveBaseController_.moveBaseClient_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED 
+                ||  moveBaseController_.moveBaseClient_.getState() == actionlib::SimpleClientGoalState::ABORTED
+                ||  moveBaseController_.moveBaseClient_.getState() == actionlib::SimpleClientGoalState::REJECTED){
+                
+                if( moveBaseController_.moveBaseClient_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED){
+                    result = true;
+                } else {
+                    result = false;
+                }
+                break;
+            } 
+
+            auto end = ros::WallTime::now();
+            auto duration = (end - start).toSec();
+
+            float distFromGoal = 
+                     goalCalculator.distanceCalculate( cv::Point2d(robotPose_.pose.position.x, robotPose_.pose.position.y),
+                         cv::Point2d(goalMsg.pose.position.x, goalMsg.pose.position.y));
+
+
+            cerr<<" the duration is "<<duration<<" distFromGoal "<<distFromGoal<<endl;
+            if( duration > duration_wait_for_move_base_response_ && distFromGoal < 2.0){ 
+                return false;
+            }
+
+            ros::spinOnce();
+        }  
+
+        
+
+        return result;
+    }
+
     
     void saveCoverageImg(){
 
-        if( !imgSaved_ && mapping_map_.data){
+        if( /*!imgSaved_ &&*/ mapping_map_.data){
 
-            
+            cerr<<"1111111111111111111111111 "<<endl;
             Mat coverageImg = mapping_map_.clone();
             cvtColor(coverageImg, coverageImg, COLOR_GRAY2BGR);
 
@@ -1261,6 +1329,8 @@ public:
                     cv::line(coverageImg, path_[i], path_[i - 1], Scalar(34, 139, 139), 2);
                 }             
             }
+
+            cerr<<"2222222222222222222222222 "<<endl;
 
             /*
                 Hi yakir,  can you change the file format  to these:
@@ -1277,8 +1347,10 @@ public:
            
 
             string image_name_format = startingTime_ + '_' +to_string(durationMinutes)+ '_' + to_string(int(percentCoverage_));
-            string full_img_name = coverage_img_path_ + "/"+image_name_format+".png";
+            string full_img_name =  to_string(node_.getParam("/coverage/image_path",coverage_img_path_)) + "/"+image_name_format+".png";
             node_.setParam("/coverage/image_name", image_name_format);
+
+            cerr<<"full_img_name: "<<full_img_name<<endl;
 
             cv::imwrite(full_img_name, coverageImg);
 
@@ -1383,13 +1455,12 @@ private:
 
     string baseLinkFrame_ = "base_link";
 
-    int algoRateHz;
-
-    double map_dilation_level_;
 
     double robot_radius_meters_ = 0.3;
 
     double nim_map_score_to_finish_exploration_ = 70.0;
+
+    double duration_wait_for_move_base_response_ = 15.0;
 
     double percentCoverage_ = 0.0;
 
