@@ -1454,9 +1454,9 @@ private:
 
     tf::TransformListener tfListener_;
 
-    string mapFrame_ = "map";
+    string mapFrame_ = "odom";
 
-    string baseLinkFrame_ = "base_link";
+    string baseLinkFrame_ = "base_footprint";
 
 
     double robot_radius_meters_ = 0.3;
