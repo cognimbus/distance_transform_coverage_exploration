@@ -7,7 +7,7 @@
     <arg name="duration_wait_for_move_base_response" default="15.0" />  
 
     <arg name="base_frame" default="base_footprint" />  
-    <arg name="global_frame" default="odom" />  
+    <arg name="global_frame" default="map" />  
 
   
     <node name="map_coverage_node" pkg="map_coverage" 

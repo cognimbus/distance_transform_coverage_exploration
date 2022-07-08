@@ -50,6 +50,8 @@
 #include <std_msgs/String.h>
 #include <nav_msgs/Path.h>
 #include <tf2/LinearMath/Quaternion.h>
+#include <cv_bridge/cv_bridge.h>
+#include <image_transport/image_transport.h>
 
 #include <boost/algorithm/string.hpp>
 #include <opencv2/opencv.hpp>
@@ -102,6 +104,7 @@ string getCurrentTime(){
     strftime (buffer,80,"%F/%H_%M",timeinfo);
     string curr_time_Str = strdup(buffer);
     std::replace( curr_time_Str.begin(), curr_time_Str.end(), '/', '_');
+    std::replace( curr_time_Str.begin(), curr_time_Str.end(), '-', '_');
 
     cerr<<curr_time_Str<<endl;
 
@@ -212,6 +215,10 @@ public:
 
         goal_a_star_marker_pub_ = node_.advertise<visualization_msgs::Marker>("/goal_a_star", 10);
 
+        image_transport::ImageTransport it(node_);
+        coverage_map_pub_ = it.advertise("/coverage_map_img", 1);
+        nodePrivate.param("/coverage_map_img/compressed/jpeg_quality", 20);
+
         init_ = false;
 
         /// params
@@ -256,6 +263,31 @@ public:
        
 
         return output;
+    }
+
+    void publishCoverageImgMap() {
+
+
+        Mat map = getCurrentMap();
+
+        if (map.data) {
+
+            cvtColor(map, map, COLOR_GRAY2BGR);
+
+            // draw the path
+            for( int i = 0; i < path_.size(); i++){
+
+                if( i > 0 ){
+                    cv::line(map, path_[i], path_[i - 1], Scalar(34, 139, 139), 2);
+                }             
+            }
+
+            
+            auto msg = cv_bridge::CvImage(std_msgs::Header(), "bgr8", map).toImageMsg();
+            coverage_map_pub_.publish(msg);
+        }
+
+           
     }
 
     void publishStartConverage(const geometry_msgs::PoseStamped &pose)
@@ -1205,7 +1237,7 @@ public:
 
                       
 
-                        // saveCoverageImg();
+                        publishCoverageImgMap();
 
                         
                         publishCoveragePath(coveragePathPoses_);
@@ -1326,9 +1358,8 @@ public:
     
     void saveCoverageImg(){
 
-        if( /*!imgSaved_ &&*/ mapping_map_.data){
+        if( !imgSaved_ && mapping_map_.data){
 
-            cerr<<"1111111111111111111111111 "<<endl;
             Mat coverageImg = mapping_map_.clone();
             cvtColor(coverageImg, coverageImg, COLOR_GRAY2BGR);
 
@@ -1341,7 +1372,6 @@ public:
                 }             
             }
 
-            cerr<<"2222222222222222222222222 "<<endl;
 
             /*
                 Hi yakir,  can you change the file format  to these:
@@ -1403,6 +1433,8 @@ private:
 
     ros::Publisher global_start_marker_pub_;
 
+    image_transport::Publisher  coverage_map_pub_;
+
     DistanceTransformGoalCalculator distanceTransformGoalCalculator;
     DisantanceMapCoverage disantanceMapCoverage;
     GoalCalculator goalCalculator;
@@ -1462,7 +1494,7 @@ private:
 
     tf::TransformListener tfListener_;
 
-    string globalFrame_ = "odom";
+    string globalFrame_ = "map";
 
     string baseFrame_ = "base_footprint";
 

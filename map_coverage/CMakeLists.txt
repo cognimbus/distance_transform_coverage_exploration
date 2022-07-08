@@ -7,8 +7,11 @@ find_package(OpenCV REQUIRED )
 
 find_package(catkin REQUIRED COMPONENTS
   
+  image_transport
+  cv_bridge
   roscpp  
   nav_msgs
+  image_geometry
   move_base
   move_base_msgs
   actionlib
