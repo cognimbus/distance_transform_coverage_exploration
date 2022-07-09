@@ -653,7 +653,7 @@ public:
 
         geometry_msgs::PoseStamped pose;
 
-        pose.header.frame_id = "map";
+        pose.header.frame_id = globalFrame_;
 
         pose.pose.position.x = (pixel.x * mapResolution_) + map_origin_position_x;
         pose.pose.position.y = (pixel.y * mapResolution_) + map_origin_position_y;
@@ -756,7 +756,7 @@ public:
     {
 
         nav_msgs::Path msgMsg;
-        msgMsg.header.frame_id = "map";
+        msgMsg.header.frame_id = globalFrame_;
         msgMsg.header.stamp = ros::Time::now();
         msgMsg.poses = coveragePathPoses;
 
