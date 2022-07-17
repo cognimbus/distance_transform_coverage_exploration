@@ -35,6 +35,7 @@
 //  */
 
 #include <ros/ros.h>
+#include <signal.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -90,6 +91,10 @@ using namespace std;
 geometry_msgs::PoseStamped startingLocation_;
 string startingTime_;
 
+bool exit_ = false;
+
+
+    
 
 string getCurrentTime(){ 
 
@@ -232,9 +237,30 @@ public:
 
     }
 
-    ~MapCoverageManager() {}
+    ~MapCoverageManager() {
 
-    
+
+        moveBaseController_.cancelNavigation();
+        ros::Duration(1).sleep();
+
+        cerr<<"MapCoverageManager distructor "<<endl;
+        saveCoverageImg();
+
+        ros::shutdown();
+
+    }
+
+    static void mySigintHandler(int sig, void *ptr)
+    {   
+        exit_ = true;
+
+        cerr<<"mySigintHandler "<<endl;
+      
+
+    }
+
+
+  
 
     Mat occupancyGridMatToGrayScale(const Mat &map)
     {
@@ -1245,6 +1271,11 @@ public:
 
                         bool result = sendGoal(coveragePathPoses_[i]);
 
+                        if( exit_){
+
+                            return;
+                        }
+
                         if (result)
                         {
                             cerr << i << ": Waypoint reached!" << endl;
@@ -1318,6 +1349,11 @@ public:
         bool result = true;
         while(ros::ok()) {
 
+            if( exit_){
+
+                return true;
+            }
+
             moveBaseController_.moveBaseClient_.waitForResult(ros::Duration(0.1));
 
             if( moveBaseController_.moveBaseClient_.getState() == actionlib::SimpleClientGoalState::SUCCEEDED 
@@ -1343,7 +1379,7 @@ public:
 
 
             cerr<<" the duration is "<<duration<<" distFromGoal "<<distFromGoal<<endl;
-            if( duration > duration_wait_for_move_base_response_ && distFromGoal < 2.0){ 
+            if( duration > duration_wait_for_move_base_response_ && distFromGoal < 1.0){ 
                 return false;
             }
 
@@ -1388,7 +1424,7 @@ public:
            
 
             string image_name_format = startingTime_ + '_' +to_string(durationMinutes)+ '_' + to_string(int(percentCoverage_));
-            string full_img_name = coverage_img_path_ + "/"+image_name_format+".png";
+            string full_img_name = coverage_img_path_ + image_name_format+".png";
             node_.setParam("/coverage/image_name", image_name_format);
 
             cerr<<"full_img_name: "<<full_img_name<<endl;
@@ -1525,10 +1561,12 @@ private:
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "map_coverage_exploration_node");
-
+    ros::init(argc, argv, "map_coverage_exploration_node" , ros::init_options::NoSigintHandler);
 
     MapCoverageManager mapCoverageManager;
+    signal(SIGINT, (void (*)(int))MapCoverageManager::mySigintHandler); 
+
+
     if ( mapCoverageManager.exlpore()) {
         
         mapCoverageManager.coverage();
