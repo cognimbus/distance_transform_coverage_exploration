@@ -111,7 +111,6 @@ string getCurrentTime(){
     std::replace( curr_time_Str.begin(), curr_time_Str.end(), '/', '_');
     std::replace( curr_time_Str.begin(), curr_time_Str.end(), '-', '_');
 
-    cerr<<curr_time_Str<<endl;
 
     return curr_time_Str;    
 }
@@ -167,7 +166,7 @@ public:
         // cerr<<" wait for move-base server "<<endl;
         moveBaseController_.waitForServer(ros::Duration(10.0));
         ros::Duration(1).sleep();
-        cerr << " connect to move-base !! " << endl;
+        cerr << " exploration is now connecting with move-base !! " << endl;
 
         // rosparam
         ros::NodeHandle nodePrivate("~");
@@ -181,16 +180,7 @@ public:
 
         nodePrivate.param("/coverage/percentage", percentCoverage_, 0.0);    
         nodePrivate.param("/coverage/state", state_, string("INITIALIZING"));
-        nodePrivate.param("/coverage/image_name", image_name_, string(""));  
-
-
-
-        cerr<<"base_frame "<<baseFrame_<<endl;
-
-        cerr<<"coverage_img_path_ "<<coverage_img_path_<<endl;
-
-
-        
+        nodePrivate.param("/coverage/image_name", image_name_, string(""));        
        
 
         // subs
@@ -233,8 +223,6 @@ public:
 
         startingCoverageTime_ = high_resolution_clock::now();
 
-
-
     }
 
     ~MapCoverageManager() {
@@ -252,15 +240,12 @@ public:
 
     static void mySigintHandler(int sig, void *ptr)
     {   
+
+        cerr<<" user pressed CTRL+C "<<endl;
         exit_ = true;
 
-        cerr<<"mySigintHandler "<<endl;
-      
 
-    }
-
-
-  
+    } 
 
     Mat occupancyGridMatToGrayScale(const Mat &map)
     {
@@ -378,7 +363,7 @@ public:
         robotMarker.color.r = 0.2;
         robotMarker.color.g = 0.8;
         robotMarker.color.b = 1.0;
-        robotMarker.lifetime = ros::Duration(200);
+        robotMarker.lifetime = ros::Duration(2000);
 
        safest_goal_marker_pub_.publish(robotMarker);
     }
@@ -541,6 +526,8 @@ public:
             tfListener_.lookupTransform(globalFrame_, baseFrame_,
                                         ros::Time(0), transform);
 
+            robotPose_.header.frame_id = globalFrame_;
+            robotPose_.header.stamp = ros::Time::now();
             robotPose_.pose.position.x = transform.getOrigin().x();
             robotPose_.pose.position.y = transform.getOrigin().y();
             robotPose_.pose.position.z = 0;
@@ -1061,7 +1048,6 @@ public:
                     safestGoal = fixLocationOnGrid(safestGoal, globalStart_);
 
                     publishSafestGoalMarker(convertPixToPose(safestGoal, robotPose_.pose.orientation));
-                    publishSafestGoalMarker(convertPixToPose(safestGoal, robotPose_.pose.orientation));
 
 
                     cerr<<"exploration: safestGoal "<<safestGoal<<endl;
@@ -1091,7 +1077,7 @@ public:
                     cerr<<"map exploration score: "<<mapScore<<endl;
                     
 
-                    if( currentEdgesFrontiers.size() < 2){
+                    if( currentEdgesFrontiers.size() == 0){
 
                         explore_state_ = FINISH_EXPLORE;
                         break;
@@ -1167,12 +1153,7 @@ public:
         {
             ros::spinOnce();
 
-            if (coverage_state_ == COVERAGE_DONE)
-            {
-
-                return;
-            }
-
+            
             if (!init_)
             {
 
@@ -1287,14 +1268,16 @@ public:
                     }
 
                     coverage_state_ = BACK_TO_STARTING_LOCATION;
-
-                    prevAlgoMap_ = currentAlgoMap_.clone();
-
                     break;
                 }
                 case BACK_TO_STARTING_LOCATION:
                 {   
                     cerr<<" BACK_TO_STARTING_LOCATION "<<endl;   
+            
+                    cerr<<"startingLocation_ : "<<startingLocation_.pose.position.x<<", "<<startingLocation_.pose.position.y<<endl;
+                    cerr<<"startingLocation_  frame: "<<startingLocation_.header.frame_id<<endl;
+
+                    publishSafestGoalMarker(startingLocation_);
 
                     bool result = sendGoal(startingLocation_);
 
@@ -1378,9 +1361,9 @@ public:
                          cv::Point2d(goalMsg.pose.position.x, goalMsg.pose.position.y));
 
 
-            cerr<<" the duration is "<<duration<<" distFromGoal "<<distFromGoal<<endl;
+            // cerr<<" the duration is "<<duration<<" distFromGoal "<<distFromGoal<<endl;
             if( duration > duration_wait_for_move_base_response_ && distFromGoal < 1.0){ 
-                return false;
+                return true;
             }
 
             ros::spinOnce();
@@ -1493,7 +1476,6 @@ private:
 
     cv::Mat currentAlgoMap_;
 
-    cv::Mat prevAlgoMap_;
 
     ros::NodeHandle node_;
 
