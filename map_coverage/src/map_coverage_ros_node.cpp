@@ -172,7 +172,7 @@ public:
         ros::NodeHandle nodePrivate("~");
         nodePrivate.param("distance_between_goals_m", distBetweenGoalsM_, 0.5);
         nodePrivate.param("robot_raduis", robot_radius_meters_, 0.3);
-        nodePrivate.param("exploration_score", nim_map_score_to_finish_exploration_, 70.0);
+        nodePrivate.param("wanted_coverage_score", wanted_coverage_score_, 0.95);
         nodePrivate.param("duration_wait_for_move_base_response", duration_wait_for_move_base_response_, 15.0);
         nodePrivate.param<string>("coverage_image_path", coverage_img_path_, string(""));  
         nodePrivate.param<string>("base_frame", baseFrame_, string("base_link"));  
@@ -1214,7 +1214,8 @@ public:
 
                     path_ =
                         disantanceMapCoverage.getCoveragePath(currentAlgoMap_, currentPosition,
-                                                            goal, distanceTransformImg, getDistanceBetweenGoalsPix(), true);          
+                                                            goal, distanceTransformImg, getDistanceBetweenGoalsPix(), 
+                                                                wanted_coverage_score_);          
 
 
 
@@ -1525,7 +1526,7 @@ private:
 
     double robot_radius_meters_ = 0.3;
 
-    double nim_map_score_to_finish_exploration_ = 70.0;
+    double wanted_coverage_score_ = 0.95;
 
     double duration_wait_for_move_base_response_ = 15.0;
 
@@ -1633,7 +1634,7 @@ int main(int argc, char **argv)
 
 //         vector<cv::Point> path =
 //             disantanceMapCoverage.getCoveragePath(currentAlgoMap_, currentPosition,
-//                                                 goal, distanceTransformImg, pixDist, true);          
+//                                                 goal, distanceTransformImg, pixDist, 0.95);          
 
 
 

@@ -91,7 +91,7 @@ public:
                         const cv::Point& goal,
                         cv::Mat& distanceTransformImg,
                         double dist_between_points,                        
-                        bool stopWhenGoalReached = false)
+                        float wanted_coverage_score )
     {      
         cv::Mat visitedCells(distanceTransformImg.rows,
                              distanceTransformImg.cols, CV_8UC1, cv::Scalar(NOT_VISITED));
@@ -137,7 +137,7 @@ public:
 
             cerr<<" totalCoverSoFar"<<totalCoverSoFar<<" son_father.size() "<<son_father.size()<<endl;
 
-            if( totalCoverSoFar > 0.98){
+            if( totalCoverSoFar > wanted_coverage_score){
                 
                 break;               
             }

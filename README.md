@@ -20,8 +20,8 @@ After calculating the path, the robot will drive on this path by sending goals i
 the min distance bewteen goals inisde of the coverage path in meters.
 #### robot_raduis
 robot radius in meters
-#### exploration_score
-the min score threshold of the map that represnt how closed the map is (contour). 
+#### wanted_coverage_score
+the min score for wanted_coverage_score (0-1)
 
 ### topics
 #### Subscribed Topics
