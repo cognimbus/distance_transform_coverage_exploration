@@ -1005,7 +1005,13 @@ public:
         while (ros::ok())
         {
             ros::spinOnce();
-           
+
+
+            if (exit_){
+
+                return false;
+            }
+
 
             if (!init_)
             {
@@ -1109,32 +1115,32 @@ public:
                 case FINISH_EXPLORE:
                 {
 
-                    cerr<<"FINISH_EXPLORE "<<endl;
+                    // cerr<<"FINISH_EXPLORE "<<endl;
 
-                    currentAlgoMap_ = getCurrentMap();
-                    globalStart_ = convertPoseToPix(robotPose_);
+                    // currentAlgoMap_ = getCurrentMap();
+                    // globalStart_ = convertPoseToPix(robotPose_);
 
-                    cv::Point safestGoal;
-                    if (!goalCalculator.findSafestLocation(currentAlgoMap_, globalStart_, safestGoal))
-                    {
+                    // cv::Point safestGoal;
+                    // if (!goalCalculator.findSafestLocation(currentAlgoMap_, globalStart_, safestGoal))
+                    // {
                         
-                        cerr<<"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb "<<endl;
-                        return true;
-                    }
+                    //     cerr<<"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb "<<endl;
+                    //     return true;
+                    // }
 
-                    safestGoal = fixLocationOnGrid(safestGoal, globalStart_);
+                    // safestGoal = fixLocationOnGrid(safestGoal, globalStart_);
 
-                    publishSafestGoalMarker(convertPixToPose(safestGoal, robotPose_.pose.orientation));
-                    publishSafestGoalMarker(convertPixToPose(safestGoal, robotPose_.pose.orientation));
+                    // publishSafestGoalMarker(convertPixToPose(safestGoal, robotPose_.pose.orientation));
+                    // publishSafestGoalMarker(convertPixToPose(safestGoal, robotPose_.pose.orientation));
 
 
-                    cerr<<"exploration FINISH_EXPLORE: safestGoal "<<safestGoal<<endl;
+                    // cerr<<"exploration FINISH_EXPLORE: safestGoal "<<safestGoal<<endl;
 
-                    bool result = sendGoal(convertPixToPose(safestGoal, robotPose_.pose.orientation));  
+                    // bool result = sendGoal(convertPixToPose(safestGoal, robotPose_.pose.orientation));  
 
-                    cerr<<"exploration: mov_base_result "<<result<<endl;   
+                    // cerr<<"exploration: mov_base_result "<<result<<endl;   
 
-                    ros::Duration(1).sleep();
+                    // ros::Duration(1).sleep();
      
                     
                     return true;
@@ -1571,20 +1577,22 @@ int main(int argc, char **argv)
 //     float mapResolution_ = 0.05;
 //     float distBetweenGoalsM_ = 0.5;
 //     int pixDist = (1.0 / mapResolution_) * distBetweenGoalsM_;
-//     float robot_radius_meters_ = 0.0;
+//     float robot_radius_meters_ = 0.2;
 
-//     Mat currentAlgoMap_ = imread("/home/yakir/distance_transform_coverage_ws/map.pgm",0);
+//     Mat currentAlgoMap_ = imread("/home/yakir/distance_transform_coverage_ws/data/2/map.pgm",0);
 //     cv::flip(currentAlgoMap_, currentAlgoMap_, 0);
 //     Mat mappingMap = currentAlgoMap_.clone();  
 
+//     // imwrite("/home/yakir/distance_transform_coverage_ws/data/2/mappingMap_flip.pgm",currentAlgoMap_);
+//     // return 0;
    
 //     addDilationForGlobalMap(currentAlgoMap_, robot_radius_meters_, mapResolution_);
 //     addFreeSpaceDilation(currentAlgoMap_);
 
-//     if( true) {
+//     if( false) {
         
 //         cerr<<"yakir "<<endl;
-//         cv::Point globalStart_(80,118);
+//         cv::Point globalStart_(402,100);
 //         cv::Point safestGoal;
 
              
@@ -1599,11 +1607,11 @@ int main(int argc, char **argv)
 //         return 0;
 //     }
 
-//     if( false) {
+//     if( true) {
 
 //         cv::Mat distanceTransformImg;
 
-//         cv::Point2d currentPosition(380, 207);
+//         cv::Point2d currentPosition(402,108);
 //         cv::Point2d goal = currentPosition;
 //         // // calc the distance-transform-img from current goal
 //         if( !distanceTransformGoalCalculator.calcDistanceTransfromImg(currentAlgoMap_,
